@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>AnyCPU;x64</Platforms>
+    <UserSecretsId>4af0d564-7a0f-4be3-9d69-5546e3105ed1</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="sampleSdXl\**" />
+    <Content Remove="sampleSdXl\**" />
+    <EmbeddedResource Remove="sampleSdXl\**" />
+    <None Remove="sampleSdXl\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ButtsBlazor.Api\ButtsBlazor.Api.csproj" />
+    <ProjectReference Include="..\ButtsBlazor.Client\ButtsBlazor.Client.csproj" />
+    <PackageReference Include="CliWrap" Version="3.6.4" />
+    <PackageReference Include="Coravel" Version="5.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0-rc.2.23480.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+    <PackageReference Include="PubSub" Version="4.0.2" />
+  </ItemGroup>
+
+</Project>

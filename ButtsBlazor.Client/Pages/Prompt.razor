@@ -1,0 +1,66 @@
+﻿@rendermode InteractiveWebAssembly
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Net.WebSockets
+@using System.Text
+@using System.Diagnostics
+@using System.Net
+@using System.Net.Http.Headers
+@using System.Security.Cryptography
+@using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Client.ViewModels
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@inject HttpClient Http
+@inject ILogger<Prompt> Logger
+<PageTitle>ButtPrompt</PageTitle>
+
+<Gallery Images="@images">
+</Gallery>
+
+<label>Input:</label>
+@if (isLoading)
+{
+    <p>Uploading...</p>
+}
+else
+{
+    <span>
+        @if (uploadResult?.Uploaded == true)
+        {
+            <img src="@uploadResult.Path"/>
+        }
+        else
+        {
+            <img src="/input/butts.png"/>
+        }
+    </span>
+}
+<InputFile OnChange="OnInputFileChange" />
+
+<div class="form-group">
+    <label>Prompt:
+        <input @bind="promptInput" />
+    </label>
+</div>
+<div class="form-group">
+    <label>Negative:
+        <input @bind="negativePrompt"/>
+    </label>
+</div>
+<button @onclick="Send" >Send</button>
+<hr>
+@if (!String.IsNullOrEmpty(this.imageUrl))
+{
+    <img src="@this.imageUrl"/>
+    <hr/>
+}
+
+@* <span>Socket: @webSocket.State == WebSocketState.Open</span>
+ *@
+@if (!String.IsNullOrEmpty(message))
+{
+    <ul id="messagesList">
+        <li>@message</li>
+    </ul>
+}

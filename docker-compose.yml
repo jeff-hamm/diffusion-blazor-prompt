@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  buttsblazor:
+    image: ${DOCKER_REGISTRY-}buttsblazor
+    build:
+      context: .
+      dockerfile: ButtsBlazor/Dockerfile
+  buttworker:
+    image: buttworker
+    build:
+      context: ./ButtPromptApi
+      dockerfile: Dockerfile
+    volumes:
+      - ~/.cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

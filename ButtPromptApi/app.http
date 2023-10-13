@@ -1,0 +1,9 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+@hostname=localhost
+@port=5555
+POST http://{{hostname}}:{{port}}/prompt
+Content-Type: application/json
+
+{"outputfile": "out.png"}
+
+###

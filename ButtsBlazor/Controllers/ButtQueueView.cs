@@ -1,10 +1,10 @@
-﻿using ButtsBlazor.Invokable;
-using Coravel.Queuing;
+﻿//using ButtsBlazor.Invokable;
+//using Coravel.Queuing;
 
-namespace ButtsBlazor.Controllers;
+//namespace ButtsBlazor.Controllers;
 
-public class ButtQueueViewModel
-{
-    public required QueueMetrics Metrics { get; set; }
-    public RenderingButt? Current { get; set; }
-}
+//public class ButtQueueViewModel
+//{
+//    public required QueueMetrics Metrics { get; set; }
+//    public RenderingButt? Current { get; set; }
+//}

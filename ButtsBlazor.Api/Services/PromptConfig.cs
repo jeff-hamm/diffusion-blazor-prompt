@@ -1,15 +1,19 @@
 ﻿using ButtsBlazor.Client.Utils;
 using ButtsBlazor.Invokable;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace ButtsBlazor.Services
 {
     public static class PromptConfig
     {
-        public static WebApplicationBuilder AddPrompts(this WebApplicationBuilder @this)
+        public static IServiceCollection AddPrompts(this IServiceCollection @this, IConfigurationManager configurationManager)
         {
-            @this.Services.AddSingleton<FileService>();
-            @this.Services.Configure<PromptOptions>(@this.Configuration.GetSection(nameof(PromptOptions)));
-            @this.Services.AddSingleton<PromptQueue>();
+            @this.AddSingleton<FileService>();
+            @this.Configure<PromptOptions>(configurationManager.GetSection(nameof(PromptOptions)));
+            @this.AddSingleton(sp => sp.GetService<IOptions<PromptOptions>>()?.Value ?? throw new InvalidOperationException($"Could not find PromptOptions"));
+            @this.AddSingleton<PromptQueue>();
             return @this;
         }
     }

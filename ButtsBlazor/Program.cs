@@ -1,15 +1,15 @@
-using ButtsBlazor.Components;
 using ButtsBlazor.Hubs;
 using ButtsBlazor.Invokable;
+using ButtsBlazor.Server.Components;
 using ButtsBlazor.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<ButtOptions>(builder.Configuration.GetSection(nameof(ButtOptions)));
-builder.Services.AddButtPrompts();
-builder.AddPrompts();
+//builder.Services.Configure<ButtOptions>(builder.Configuration.GetSection(nameof(ButtOptions)));
+//builder.Services.AddButtPrompts();
+builder.Services.AddPrompts(builder.Configuration);
 builder.Services.AddSignalR().AddHubOptions<PromptHub>(opts =>
 {
     opts.MaximumReceiveMessageSize = Int32.MaxValue;
@@ -47,7 +47,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseButtPrompts();
+//app.UseButtPrompts();
 
 //app.UseHttpsRedirection();
 

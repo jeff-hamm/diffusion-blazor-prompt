@@ -30,7 +30,6 @@ namespace ButtsBlazor.Controllers
             var resourcePath = new Uri($"{Request.Scheme}://{Request.Host}/");
             var uploadResult = new UploadResult();
             var untrustedFileName = file.FileName;
-            uploadResult.FileName = untrustedFileName;
             var displayFileName =
                 WebUtility.HtmlEncode(untrustedFileName);
 

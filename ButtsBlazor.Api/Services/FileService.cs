@@ -1,13 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using ButtsBlazor.Client.Utils;
-using ButtsBlazor.Client.ViewModels;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Options;
-using System.IO;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace ButtsBlazor.Services
 {
@@ -16,9 +10,8 @@ namespace ButtsBlazor.Services
         ControlImage,
         OutputImage,
     }
-    public class FileService(IWebHostEnvironment env, IOptions<PromptOptions> options)
+    public class FileService(IWebHostEnvironment env, PromptOptions config)
     {
-        private PromptOptions Config => options.Value;
 
         public async Task<string?> ReadAsBase64Contents(string? relativePath)
         {
@@ -48,9 +41,9 @@ namespace ButtsBlazor.Services
         public async ValueTask<SaveFileResult> SaveAndHashUploadedFile(IFormFile file)
         {
             var ext = Path.GetExtension(file.FileName).ToLower();
-            if (!Config.SupportedImageExtensions.Contains(ext))
-                throw new UnsupportedContentTypeException($"No support for file extension ext");
-            var tempPath = ToFilePath(Config.TempUploadsPath, Path.GetRandomFileName());
+            if (!config.SupportedImageExtensions.Contains(ext))
+                throw new InvalidOperationException($"No support for file extension ext");
+            var tempPath = ToFilePath(config.TempUploadsPath, Path.GetRandomFileName());
             await using var stream = file.OpenReadStream();
             try
             {
@@ -84,8 +77,8 @@ namespace ButtsBlazor.Services
         public bool RelativeFileExists(string relativePath) =>
             File.Exists(ToFilePath(relativePath));
 
-        public string UploadPath => Path.Combine(Config.ImagePathRoot, Config.ImageUploadsPath);
-        public string OutputPath => Path.Combine(Config.ImagePathRoot, Config.ImageOutputPath);
+        public string UploadPath => Path.Combine(config.ImagePathRoot, config.ImageUploadsPath);
+        public string OutputPath => Path.Combine(config.ImagePathRoot, config.ImageOutputPath);
 
         public string ToRelativeUploadPath(string fileName) =>
             Path.Combine(UploadPath, fileName);

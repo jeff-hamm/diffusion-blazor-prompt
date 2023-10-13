@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using ButtsBlazor.Client.Utils;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace ButtsBlazor.Services;

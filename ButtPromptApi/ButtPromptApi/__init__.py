@@ -1,3 +1,4 @@
+from re import L
 import string
 from typing import Annotated
 from .PromptArgs import PromptArgs
@@ -18,9 +19,9 @@ class NextPromptResponse:
     def acquire(self, timeout:float|None=None):
         return self.lock.acquire(timeout)
             
-    def prompt(self, prompt_dict):
-        self.prompt = prompt_dict;
+    def release(self):
         self.lock.release();
+
 
 
 
@@ -64,20 +65,33 @@ class PromptRunner:
         
     def processNext(self):
         prompt_response = NextPromptResponse()
+        prompt_response.prompt = None
         prompt_response.lock.acquire()
         self.hub_connection.send(
             "ProcessNext", # Method
             [], # Params
-            lambda prompt: prompt_response.prompt(prompt)) # Callback
-        if not prompt_response.lock.acquire(timeout=10) or prompt_response.prompt.result == None:
+            lambda prompt: self.processNextCallback(prompt_response, prompt)) # Callback
+        print("Response Lock")
+        if not prompt_response.lock.acquire(timeout=30) or prompt_response.prompt is None:
             print("Prompt not found")
             return False
-        prompt = PromptArgs(prompt_response.prompt.result)
-        print(f"Got response prompt {prompt.id}: {prompt}")
+        
+        prompt = prompt_response.prompt
+        print(f"Got prompt {prompt.id}: {prompt}")
         generated = self.pipeline.generatebutt(prompt)
         self.hub_connection.send("ProcessComplete", [prompt.id, generated])
         return True
+    
+    def processNextCallback(self, lock:NextPromptResponse, prompt_dict):
+        print("Got response", prompt_dict)
+        if(prompt_dict.result):
+            lock.prompt = PromptArgs(prompt_dict.result)
+        lock.release();
+        print("Unlocked");
         
+        
+
+
     def run(self):
         self.hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
         self.hub_connection.on_close(lambda: self.reconnect())

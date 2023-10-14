@@ -2,6 +2,14 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using ButtsBlazor.Client.ViewModels;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using static System.Net.WebRequestMethods;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Cryptography;
+using Telerik.SvgIcons;
 
 namespace ButtsBlazor.Client.Pages
 {
@@ -17,6 +25,9 @@ namespace ButtsBlazor.Client.Pages
         private List<string> imageSources = new();
         private const int maxAllowedFiles = 2;
         private string? ErrorMessage;
+        private bool isLoading;
+        private UploadResult? uploadResult;
+
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -32,27 +43,46 @@ namespace ButtsBlazor.Client.Pages
 
         void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
 
-        async Task OnChange(InputFileChangeEventArgs e)
+        private async Task OnChange(InputFileChangeEventArgs e)
         {
-            imageSources.Clear();
             ErrorMessage = string.Empty;
 
-            if (e.FileCount > maxAllowedFiles)
+            using var content = new MultipartFormDataContent();
+            var file = e.File;
+            try
             {
-                ErrorMessage = $"Only {maxAllowedFiles} files can be uploaded";
-                return;
-            }
+                isLoading = true;
+                StateHasChanged();
+                var fileContent = new StreamContent(file.OpenReadStream(Options.MaxFileSize));
 
-            foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+                fileContent.Headers.ContentType =
+                    new MediaTypeHeaderValue(file.ContentType);
+                content.Add(
+                content: fileContent,
+                    name: "\"file\"",
+                fileName: file.Name);
+
+
+                var response = await Http.PostAsync("api/ControlImages", content);
+                uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
+                if (uploadResult?.Uploaded == true && uploadResult.Path != null)
+                    imageSources.Add(uploadResult.Path);
+
+            }
+            catch (Exception ex)
             {
-                await using var stream = file.OpenReadStream(maxAllowedSize: 1024L * 1024L * 100L);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                imageSources.Add($"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}");
+                Logger.LogInformation(
+                    "{FileName} not uploaded: {Message}",
+                    file.Name, ex.Message);
             }
-
-            HoverClass = string.Empty;
+            finally
+            {
+                isLoading = false;
+                HoverClass = string.Empty;
+                StateHasChanged();
+            }
         }
+
 
         public async ValueTask DisposeAsync()
         {

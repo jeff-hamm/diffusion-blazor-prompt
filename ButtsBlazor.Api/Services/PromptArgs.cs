@@ -1,12 +1,18 @@
-﻿namespace ButtsBlazor.Services;
+﻿using System.ComponentModel.DataAnnotations;
 
-public record PromptArgs(Guid Id, string Prompt, string? Negative = null, string? ControlFilePath = null,
-    int? CannyLow = null, int? CannyHigh = null, int? ControlSize = null,
-    double? ControlScale = null)
+namespace ButtsBlazor.Services;
+
+public class PromptArgs
 {
+    [Key]
+    public required Guid Id { get; init; }
+    public required string Prompt { get; init; }
+    public string? ControlFilePath { get; init; }
     public string? ControlFile { get; set; }
-    public DateTimeOffset? Enqueued { get; set; }
-    public DateTimeOffset? ProcessingStart { get; set; }
-    public DateTimeOffset? ProcessingCompleted { get; set; }
-    public string? ImagePath { get; set; }
+    public string? Negative { get; init; }
+    public int? NumSteps { get; init; }
+    public int? CannyLow { get; init; }
+    public int? CannyHigh { get; init; }
+    public int? ControlSize { get; init; }
+    public double? ControlScale { get; init; }
 }

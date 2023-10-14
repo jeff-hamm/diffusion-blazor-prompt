@@ -12,6 +12,7 @@ from io import BytesIO
 from .PromptState import PromptState
 from .PromptArgs import PromptArgs
 from .ListenerStream import ListenerStream
+import requests
 
 
 class PromptPipeline:
@@ -53,22 +54,39 @@ class PromptPipeline:
         # refiner.to("cuda")
         self.pipeline = self.sdxlBase
 
+    def postImage(self,id, urlStr,fileName, img:Image):
+        byte_io = BytesIO()
+        img.save(byte_io, 'png')
+        byte_io.seek(0)    
+        requests.post(
+            url(urlStr),
+            data={'id': id},
+            files={
+                'file': (
+                    fileName + '.png',
+                    byte_io,
+                    'image/png'
+                )
+            },
+            verify=False
+        )
+
     def generatebutt(self, args:PromptArgs):
         try:
             self.state.running = True
             self.state.file = args
-            if(args.controlfile is not None):
-                imgdata = base64.b64decode(args.controlfile)
-                control_image = Image.open(io.BytesIO(imgdata))
+            if(args.controlFile is not None):
+                imgdata = base64.b64decode(args.controlFile)
+                control_image = Image.open(BytesIO(imgdata))
             else:
-                control_image = load_image(args.controlpath)
-            control_image = resize(control_image, args.controlsize)
+                control_image = load_image(args.controlPath)
+            control_image = resize(control_image, args.controlSize)
             control_image = np.array(control_image)
-            control_image = cv2.Canny(control_image, args.cannylow, args.cannyhigh)
+            control_image = cv2.Canny(control_image, args.cannyLow, args.cannyHigh)
             control_image = control_image[:, :, None]
             control_image = np.concatenate([control_image, control_image, control_image], axis=2)
             control_image = Image.fromarray(control_image)
-            control_image.save('./control.png')
+            self.postImage('https://localhost:7229/api/ControlImages/Canny', args.id, 'control_canny',control_image);
 
             print("start")
             # run both experts
@@ -76,10 +94,10 @@ class PromptPipeline:
                 prompt=args.prompt,
                 negative_prompt=args.negative,
                 image=control_image,
-                controlnet_conditioning_scale=args.controlscale,
-                height=args.controlsize,
-                width=args.controlsize
-            #    num_inference_steps=n_steps,
+                controlnet_conditioning_scale=args.controlScale,
+                height=args.controlSize,
+                width=args.controlSize,
+                num_inference_steps=args.numSteps,
             #    denoising_end=high_noise_frac,
             #   output_type="latent",
             ).images
@@ -90,8 +108,8 @@ class PromptPipeline:
             #    image=images,
             #).images
             image = images[0]
-            if(args.outputfile != None):
-                image.save(args.outputfile)
+            if(args.outputFile != None):
+                image.save(args.outputFile)
 #            print("output:" + args.outputfile)
             buffered = BytesIO()
             image.save(buffered, format="PNG")

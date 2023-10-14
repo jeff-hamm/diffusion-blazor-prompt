@@ -1,8 +1,20 @@
-﻿@inject IJSRuntime JSRuntime;
+﻿@page "/upload"
+@inject HttpClient Http
+@inject ILogger<Prompt> Logger
+@inject PromptOptions Options
+
+@inject IJSRuntime JSRuntime;
+@using ButtsBlazor.Client.Utils
 @implements IAsyncDisposable
 
 <h3>File Upload</h3>
-
+@if (isLoading)
+{
+    <p>Uploading...</p>
+}
+else
+{
+}
 <div @ref="fileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
     <InputFile OnChange="@OnChange" @ref="inputFile" />
 </div>
@@ -10,8 +22,5 @@
     <p>@ErrorMessage</p>
 </div>
 <div class="image-container">
-    @foreach(var imageSource in imageSources)
-    {
-        <img src="@imageSource" />
-    }
+    <Gallery Images="imageSources"></Gallery>
 </div>

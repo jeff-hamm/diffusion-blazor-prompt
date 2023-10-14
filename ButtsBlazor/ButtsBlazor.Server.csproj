@@ -10,21 +10,91 @@
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
+  <PropertyGroup Label="Configuration">
+    <TypeScriptTarget>ES2020</TypeScriptTarget>
+    <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
+    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+    <TypeScriptOutDir></TypeScriptOutDir>
+    <TypeScriptCompileOnSaveEnabled>False</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptToolsVersion>4.9</TypeScriptToolsVersion>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    <TypeScriptModuleKind>none</TypeScriptModuleKind>
+  </PropertyGroup>
+
+
   <ItemGroup>
     <Compile Remove="sampleSdXl\**" />
+    <Compile Remove="wwwroot\butts_images\**" />
+    <Compile Remove="wwwroot\ts\node_modules\**" />
     <Content Remove="sampleSdXl\**" />
+    <Content Remove="wwwroot\butts_images\**" />
+    <Content Remove="wwwroot\ts\node_modules\**" />
     <EmbeddedResource Remove="sampleSdXl\**" />
+    <EmbeddedResource Remove="wwwroot\butts_images\**" />
+    <EmbeddedResource Remove="wwwroot\ts\node_modules\**" />
     <None Remove="sampleSdXl\**" />
+    <None Remove="wwwroot\butts_images\**" />
+    <None Remove="wwwroot\ts\node_modules\**" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Content Remove="wwwroot\ts\buttQueue.ts" />
+    <Content Remove="wwwroot\ts\infiniteButts.ts" />
+    <Content Remove="wwwroot\ts\loadButtsWorker.ts" />
+    <Content Remove="wwwroot\ts\modes\defaultMode.ts" />
+    <Content Remove="wwwroot\ts\modes\indexMode.ts" />
+    <Content Remove="wwwroot\ts\modes\latestMode.ts" />
+    <Content Remove="wwwroot\ts\options.ts" />
+    <Content Remove="wwwroot\ts\pageManager.ts" />
+    <Content Remove="wwwroot\ts\pageModes.ts" />
+    <Content Remove="wwwroot\ts\share.ts" />
+    <Content Remove="wwwroot\ts\types.ts" />
+    <Content Remove="wwwroot\ts\utils.ts" />
+    <Content Remove="wwwroot\ts\worker\loadButtsWorker.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Scripts\infiniteButts.ts" />
+    <None Remove="Scripts\loadButtsWorker.ts" />
+    <None Remove="Scripts\pageManager.ts" />
+    <None Remove="Scripts\pageModes.ts" />
+    <None Remove="Scripts\types.ts" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ButtsBlazor.Api\ButtsBlazor.Api.csproj" />
     <ProjectReference Include="..\ButtsBlazor.Client\ButtsBlazor.Client.csproj" />
-    <PackageReference Include="CliWrap" Version="3.6.4" />
-    <PackageReference Include="Coravel" Version="5.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0-rc.2.23480.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0-rc.2.23480.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0-rc.2.23480.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0-rc.2.23480.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
-    <PackageReference Include="PubSub" Version="4.0.2" />
+    <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="Scripts\infiniteButts.ts" />
+    <TypeScriptCompile Include="Scripts\loadButtsWorker.ts" />
+    <TypeScriptCompile Include="Scripts\pageManager.ts" />
+    <TypeScriptCompile Include="Scripts\pageModes.ts" />
+    <TypeScriptCompile Include="Scripts\types.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\buttQueue.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\infiniteButts.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\loadButtsWorker.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\modes\defaultMode.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\modes\indexMode.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\modes\latestMode.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\options.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\pageManager.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\pageModes.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\share.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\types.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\utils.ts" />
+    <TypeScriptCompile Include="wwwroot\ts\worker\loadButtsWorker.ts" />
   </ItemGroup>
 
 </Project>

@@ -1,8 +1,7 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ButtsBlazor.Client.Utils;
+namespace ButtsBlazor.Api.Utils;
 
 public static class FileUtils
 {

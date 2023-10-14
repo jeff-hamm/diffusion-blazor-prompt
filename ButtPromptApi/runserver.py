@@ -19,6 +19,6 @@ if __name__ == '__main__':
     
     server_url = environ.get("ButtsUrl")
     if not server_url:
-       server_url = "ws://localhost:5023/prompt"
+       server_url = "wss://localhost:7229/prompt"
     prompt_runner = PromptRunner(server_url)
     prompt_runner.run()

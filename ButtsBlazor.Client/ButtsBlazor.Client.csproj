@@ -11,33 +11,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Pages\FileUpload.razor.css" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0-rc.2.23480.2" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0-rc.2.23480.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0-rc.2.23479.6" />
+    <PackageReference Include="Telerik.UI.for.Blazor" Version="4.6.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Prompt.razor" />
-  </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Prompt.razor" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Pages\FIleUpload.razor.js" />
-    <Content Include="Pages\FileUpload.razor.css" />
-  </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\js\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ButtsBlazor.Api\ButtsBlazor.Api.csproj" />
+    <ProjectReference Include="..\ButtsBlazor.Shared\ButtsBlazor.Shared.csproj" />
   </ItemGroup>
 
 </Project>

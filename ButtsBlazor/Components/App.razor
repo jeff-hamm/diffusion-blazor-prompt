@@ -8,13 +8,14 @@
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css'>
     <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="ButtsBlazor.styles.css" />
+    <link rel="stylesheet" href="ButtsBlazor.Server.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <title>Infinite Butts</title>
+    <HeadOutlet @rendermode="@RenderMode.InteractiveAuto" />
 </head>
 
 <body>
-    <Routes />
+<Routes @rendermode="@RenderMode.InteractiveAuto" />
 <script src="_framework/blazor.web.js"></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.5.3/umd/popper.min.js'></script>

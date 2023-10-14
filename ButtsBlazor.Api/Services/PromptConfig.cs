@@ -1,5 +1,5 @@
-﻿using ButtsBlazor.Client.Utils;
-using ButtsBlazor.Invokable;
+﻿using ButtsBlazor.Api.Services;
+using ButtsBlazor.Client.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

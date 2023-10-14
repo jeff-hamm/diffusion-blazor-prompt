@@ -1,0 +1,14 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "composite": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "ES2020",
+    "module": "ES2020",
+    "outDir": "../js/",
+    "rootDir": "."
+  },
+}

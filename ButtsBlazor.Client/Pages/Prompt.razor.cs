@@ -1,11 +1,7 @@
-﻿using ButtsBlazor.Client.Utils;
-using ButtsBlazor.Client.ViewModels;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
+using ButtsBlazor.Api.Services;
+using ButtsBlazor.Api.Utils;
 
 namespace ButtsBlazor.Client.Pages;
 
@@ -16,57 +12,65 @@ partial class Prompt : ComponentBase
     private string? message;
     private string? promptInput;
     private string? negativePrompt;
-
     readonly CancellationTokenSource disposalTokenSource = new();
-    private UploadResult? uploadResult;
-    private bool isLoading;
-    private List<string> images = new() { "/input/butts.png" };
+    private List<string> images = new() {};
 
     protected override async Task OnInitializedAsync()
     {
-        // await webSocket.ConnectAsync(new Uri("ws://localhost:5555/status"), disposalTokenSource.Token);
-        // receiveLoop = ReceiveLoop();
         hubConnection = new HubConnectionBuilder()
             .ConfigureLogging(lb => lb.SetMinimumLevel(LogLevel.Debug))
             .WithUrl(Navigation.ToAbsoluteUri("/prompt"))
             .WithAutomaticReconnect()
             .Build();
-        hubConnection.Reconnecting += async s =>
-        {
-            this.message = "Reconnecting";
-            await InvokeAsync(StateHasChanged);
-        };
-        hubConnection.Reconnected += async s =>
-        {
-            this.message = "Reconnected";
-            await InvokeAsync(StateHasChanged);
-        };
-
-        hubConnection.On<string>("StatusMessage", (status) =>
-        {
-            status = status.Trim();
-            if (!String.IsNullOrEmpty(status))
-            {
-                this.message = status;
-                StateHasChanged();
-            }
-        });
-        hubConnection.On<Guid, string>("ProcessComplete", (id, url) =>
-        {
-            this.processedId = id;
-            Console.WriteLine("ProcessComplete");
-            this.message = $"Completed: {id}";
-            this.imageUrl = url + "?cache=" + DateTime.Now.Ticks;
-            images.Add(this.imageUrl);
-            StateHasChanged();
-        });
-
+        hubConnection.Reconnecting += OnReconnecting;
+        hubConnection.Reconnected += OnReconnected;
+        hubConnection.On<string>("StatusMessage", OnStatusMessageReceived);
+        hubConnection.On<HashedImage>("NewControlImage", OnNewControlImageReceived);
+        hubConnection.On<Guid, string>("ProcessComplete", OnProcessCompleteMessage);
         message = "Connecting...";
         StateHasChanged();
         await hubConnection.StartAsync();
-        await hubConnection.SendAsync("StartListening");
+        promptState = await hubConnection.InvokeAsync<PromptState>("StartListening");
+        controlImage = promptState?.ControlImage;
         message = "Connected.";
         StateHasChanged();
+    }
+
+    private async Task OnReconnected(string? s)
+    {
+        this.message = "Reconnected";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnReconnecting(Exception? s)
+    {
+        this.message = "Reconnecting";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNewControlImageReceived(HashedImage image)
+    {
+        this.controlImage = image;
+        StateHasChanged();
+    }
+
+    private void OnProcessCompleteMessage(Guid id, string url)
+    {
+        this.processedId = id;
+        this.message = $"Completed: {id}";
+        this.imageUrl = url + "?cache=" + DateTime.Now.Ticks;
+        images.Add(this.imageUrl);
+        StateHasChanged();
+    }
+
+    private void OnStatusMessageReceived(string status)
+    {
+        status = status.Trim();
+        if (!String.IsNullOrEmpty(status))
+        {
+            this.message = status;
+            StateHasChanged();
+        }
     }
 
 
@@ -84,10 +88,10 @@ partial class Prompt : ComponentBase
     //     }
     // }
 
-    PromptOptions options = new();
-    private byte[]? uploadHash;
     private Guid? promptId;
     private Guid? processedId;
+    private PromptState? promptState;
+    private HashedImage? controlImage;
 
     public async Task Send()
     {
@@ -97,7 +101,7 @@ partial class Prompt : ComponentBase
             this.message = "Queueing...";
             this.imageUrl = null;
             StateHasChanged();
-            this.promptId = await hubConnection.InvokeAsync<Guid>("Prompt", promptInput, negativePrompt, this.uploadResult?.Hash);
+            this.promptId = await hubConnection.InvokeAsync<Guid>("Prompt", promptInput, negativePrompt, this.controlImage?.Base64Hash);
         }
         else
         {
@@ -118,50 +122,6 @@ partial class Prompt : ComponentBase
             await hubConnection.DisposeAsync();
         }
         await disposalTokenSource.CancelAsync();
-    }
-
-    private async Task OnInputFileChange(InputFileChangeEventArgs e)
-    {
-
-        using var content = new MultipartFormDataContent();
-        var file = e.File;
-        try
-        {
-            isLoading = true;
-            StateHasChanged();
-            using var sha256 = SHA256.Create();
-            await using (var hashingStream = new CryptoStream(file.OpenReadStream(options.MaxFileSize), sha256, CryptoStreamMode.Read))
-            {
-                var fileContent = new StreamContent(hashingStream);
-
-                fileContent.Headers.ContentType =
-                    new MediaTypeHeaderValue(file.ContentType);
-
-                content.Add(
-                    content: fileContent,
-                    name: "\"file\"",
-                    fileName: file.Name);
-
-
-                var response = await Http.PostAsync("api/Files", content);
-                uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
-                if (uploadResult?.Uploaded == true && uploadResult.Path != null)
-                    images.Add(uploadResult.Path);
-            }
-            uploadHash = sha256.Hash;
-
-        }
-        catch (Exception ex)
-        {
-            Logger.LogInformation(
-                "{FileName} not uploaded: {Message}",
-                file.Name, ex.Message);
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
     }
 
 }

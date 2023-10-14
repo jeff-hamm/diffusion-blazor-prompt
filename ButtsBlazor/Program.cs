@@ -1,6 +1,8 @@
+using ButtsBlazor.Api.Model;
+using ButtsBlazor.Client.Pages;
 using ButtsBlazor.Hubs;
-using ButtsBlazor.Invokable;
 using ButtsBlazor.Server.Components;
+using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -14,11 +16,7 @@ builder.Services.AddSignalR().AddHubOptions<PromptHub>(opts =>
 {
     opts.MaximumReceiveMessageSize = Int32.MaxValue;
 });
-//builder.Services.AddResponseCompression(opts =>
-//{
-//    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-//        new[] { "application/octet-stream" });
-//});
+builder.Services.AddButtsDb();
 builder.Services.AddControllers();
 builder.Services.AddScoped(sp =>
 {
@@ -50,7 +48,6 @@ else
 //app.UseButtPrompts();
 
 //app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 //app.UseRouting();
 app.UseAntiforgery();
@@ -58,6 +55,8 @@ app.MapControllers();
 app.MapHub<PromptHub>("/prompt");
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode();
-
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(Wizard).Assembly);
+    ;
+await app.MigrateDatabase();
 app.Run();

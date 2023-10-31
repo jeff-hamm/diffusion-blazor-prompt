@@ -1,0 +1,172 @@
+﻿@using ButtsBlazor.Client.Services
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+@if (Options != null)
+{
+    @if (!String.IsNullOrEmpty(Options.Prefix))
+    {
+        <div class="slot-text static prefix">@((MarkupString)Options.Prefix)</div>
+    }
+    @if(Choice != null || Options.Choices.Length > 0)
+    {
+        @if (IsPreselected)
+        {
+            <div class="slot-text static choice">@((MarkupString)Choice)</div>
+        }
+        else
+        {
+            <div class="wheel @(IsSelected ? "selected" : "") @(Choice != null ? "chosen" : "")">
+                <div class="overlay"></div>
+                @if (Choice != null)
+                {
+                    <div class="slot-text box">@((MarkupString)Choice)</div>
+                }
+                else
+                {
+                    <IndexSelector MaxIndex="1" Focus="false" OnItemSelected="Selected"></IndexSelector>
+                    <div class="boxes boxes-length-@(Options.Choices.Length)" style="@ContainerStyle" @ref="boxesRef">
+                        <div class="box slot-text" style="@BoxStyle">@((MarkupString)Options.Choices[^1])</div>
+                        @foreach (var choice in Options.Choices)
+                        {
+                            <div class="box slot-text" style="@BoxStyle">@((MarkupString)choice)</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+    @if (!String.IsNullOrEmpty(Options.Suffix))
+    {
+        <div class="slot-text static suffix">@((MarkupString)Options.Suffix)</div>
+    }
+}
+
+
+@code {
+
+    [Parameter]
+    public PromptChoice? Options { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ChoiceMade { get; set; }
+
+    [Parameter]
+    public bool IsSpinning { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    [Parameter]
+    public bool IsPreselected { get; set; }
+
+    [Parameter]
+    public int WheelHeight { get; set; } = 210;
+    [Parameter]
+    public int WheelWidth { get; set; } = 200;
+    [Parameter]
+    public string? Choice { get; set; }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        //        Options?.Choose(Options.Choices.Length > 0 ? Options.Choices[0] : "");
+        Reset();
+        StateHasChanged();
+        Spin();
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender && Choice == null && Options != null)
+        {
+            NeedsSpin = false; 
+            _promptModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/prompt.js");
+            if (!boxesRef.HasValue) return;
+            jsSpinner = await Js.InvokeAsync<IJSObjectReference>("butts.spin", boxesRef.Value, Options.Choices);
+            this.NeedsSpin = false;
+            while (!isDisposed && Options.Choice == null && jsSpinner != null)
+            {
+                var ix = await jsSpinner.InvokeAsync<int>("spin");
+                if (!isDisposed && IsSelected)
+                {
+                    Options.Choose(Options.Choices[ix]);
+                    await ChoiceMade.InvokeAsync(Options.Choices[ix]);
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+    private bool NeedsSpin { get; set; }
+    private void Reset()
+    {
+        IsSpinning = false;
+        NeedsSpin = false;
+        //        var choiceCount = Choice == null ? 0 :  Choice.Choices.Length - 1;
+        //        AddUpdate(boxesStyleDict, "transform", $"translateY(-{WheelHeight * (choiceCount)}px)");
+        //        AddUpdate(boxesStyleDict, "transitionDuration", "0s");
+        AddUpdate(singleStyleDict, "height", WheelHeight + "px");
+        AddUpdate(singleStyleDict, "filter ", "blur(0)");
+        BoxStyle = ToStyle(singleStyleDict);
+        ContainerStyle = ToStyle(boxesStyleDict);
+    }
+
+    private void Spin()
+    {
+        if (!IsSpinning)
+        {
+            IsSpinning = true;
+            NeedsSpin = true;
+        }
+        //        if(IsSpinning)
+        //        AddUpdate(boxesStyleDict,"transform","translateY(0)");
+        //        AddUpdate(boxesStyleDict, "transitionDuration","4s");
+        BoxStyle = ToStyle(singleStyleDict);
+        ContainerStyle = ToStyle(boxesStyleDict);
+    }
+
+    private void AddUpdate<TKey, TVal>(Dictionary<TKey, TVal> dict, TKey key, TVal val) where TKey:notnull
+    {
+        if (!dict.TryAdd(key, val))
+            dict[key] = val;
+    }
+
+    private Dictionary<string, string> boxesStyleDict = new();
+    private Dictionary<string, string> singleStyleDict = new();
+
+    private string ToStyle<TKey, TVal>(Dictionary<TKey, TVal>? dict) where TKey:notnull => String.Join(';', dict?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? Array.Empty<string>());
+
+    private string BoxStyle { get; set; } = "";
+
+    private string ContainerStyle { get; set; } = "";
+
+    private bool isDisposed = false;
+    public async ValueTask DisposeAsync()
+    {
+        isDisposed = true;
+        if (jsSpinner != null)
+        {
+            await jsSpinner.InvokeAsync<int>("cancel");
+            await jsSpinner.DisposeAsync();
+            jsSpinner = null;
+        }
+@*         if (_promptModule != null)
+        {
+            await _promptModule.DisposeAsync();
+            _promptModule = null;
+        }
+ *@    }
+
+    private ElementReference? boxesRef;
+    private IJSObjectReference? jsSpinner;
+    private IJSObjectReference? _promptModule;
+
+    private async Task Selected(int obj)
+    {
+        if (jsSpinner != null && IsSelected)
+        {
+            await jsSpinner.InvokeAsync<int>("cancel");
+        }
+    }
+
+}

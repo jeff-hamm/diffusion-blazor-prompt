@@ -1,0 +1,33 @@
+﻿<figure class="fullscreen">
+    <div class="src-image-container"><img class="src-img" src="@SrcImage"></div>
+    <div class="fullscreen-img-container">
+        @if (!String.IsNullOrEmpty(Image))
+        {
+            <img src="@Image" class="fullscreen-img"/>
+        }
+        else
+        {
+            <Spinner IsVisible="@true"></Spinner>
+        }
+    </div>
+    <div class="fullscreen-title-container">
+        <p class="fullscreen-title">
+            <span><q>@Title</q></span>
+        </p>
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+    </div>
+</figure>
+
+@code {
+    [Parameter]
+    public string? Title { get; set; }
+    [Parameter]
+    public string? Image { get; set; }
+    [Parameter]
+    public string? SrcImage { get; set; }
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

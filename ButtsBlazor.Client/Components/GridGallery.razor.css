@@ -1,0 +1,65 @@
+﻿.go-3Dfx > .go_gridItem.selected > * {
+    background: #454545;
+    box-shadow: 4px 6px 13px 1px hsla(0,0%,5%,.73);
+    transform: skew(-2deg,-2deg) scale(.965);
+}
+.selected {
+    z-index: 6;
+}
+.go-3Dfx > .go_gridItem.selected > *, .go-3Dfx > .go_gridItem.selected:before, .go-3Dfx > .go_gridItem.selected > * {
+    transition: all .25s ease;
+}
+
+.go-zoomFx {
+    margin: calc( --itemMinWidth / 2) auto;
+}
+
+.go-zoomFx > .go_gridItem.selected {
+    border-radius: 3px;
+    transition: all .13s ease-in;
+    z-index: 6;
+}
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-VIP {
+    transform: scale(1.25) !important;
+}
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-normal {
+    transform: scale(2) !important;
+}
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-vertigo {
+    transform: scaleX(2) !important;
+}
+    .go-zoomFx > .go_gridItem.selected.go_gridItem-vertigo:after {
+        transform: scaleY(2);
+    }
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-vertigo img {
+        object-fit: fill;
+    }
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-panorama {
+    transform: scaleY(2) !important;
+}
+.go-zoomFx > .go_gridItem.selected.go_gridItem-vertigo:after {
+    transform: scaleX(2);
+}
+
+.go-zoomFx > .go_gridItem.selected.go_gridItem-panorama img {
+    object-fit: fill
+}
+
+.go-actionIcon > a.go_gridItem:after {
+    display: none;
+}
+
+.go-actionIcon > a.go_gridItem.selected:after {
+    display: block;
+}
+
+a.go-zoomFx>.go_gridItem:hover {
+    transform: scale(1);
+    transition: all .13s ease-in;
+    z-index: 0;
+}

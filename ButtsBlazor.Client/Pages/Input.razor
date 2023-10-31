@@ -1,0 +1,35 @@
+﻿@page "/input"
+@rendermode InteractiveWebAssembly
+@using ButtsBlazor.Api.Model
+@using ButtsBlazor.Client.Services
+@using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Shared.Services
+@implements IAsyncDisposable
+@inject IButtsApiClient ApiClient
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject IButtsNotificationClient Notifications
+@inject PromptOptions Options
+@inject PersistentComponentState ApplicationState
+
+<div class="page-intro">
+    <h1>Select a Butt!</h1>
+</div>
+<section>
+    <CascadingValue Value="@random">
+        <Spinner IsVisible="@(images == null)"></Spinner>
+        <GridGallery Columns="@Columns" Zoom="true" Animate="false">
+            @if (images != null)
+            {
+                foreach (var img in @images)
+                {
+                    if (img.Entity != null && img.Item != null)
+                    {
+                        <GridGalleryItem OnClick="e => OnClick(e, img)" Href="@img.Entity.Value" LinkClass="notitle" Size="img.Item.Value" Selected="@(img.Entity == images[SelectedIndex].Entity)"></GridGalleryItem>
+                    }
+                }
+            }
+        </GridGallery>
+    </CascadingValue>
+</section>
+

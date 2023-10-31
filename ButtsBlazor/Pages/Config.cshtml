@@ -1,0 +1,13 @@
+﻿@page "/config"
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model ButtsBlazor.Server.Pages.ConfigModel
+@{
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="@Model.Input.GradioUri" class="col-form-label"></label>
+        <input asp-for="@Model.Input.GradioUri"/>
+    </div>
+    <button type="submit">Save</button>
+</form>

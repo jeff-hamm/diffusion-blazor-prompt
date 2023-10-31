@@ -1,3 +1,5 @@
-﻿namespace ButtsBlazor.Api.Utils;
+﻿using ButtsBlazor.Api.Model;
 
-public record HashedImage(string Uri, string Base64Hash);
+namespace ButtsBlazor.Shared.ViewModels;
+
+public record HashedImage(WebPath Uri, string Base64Hash);

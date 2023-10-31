@@ -1,5 +1,5 @@
-﻿using ButtsBlazor.Api.Utils;
+﻿using ButtsBlazor.Api.Model;
 
 namespace ButtsBlazor.Api.Services;
 
-public record PromptState(HashedImage? ControlImage);
+public record PromptState(ImageEntity? ControlImage);

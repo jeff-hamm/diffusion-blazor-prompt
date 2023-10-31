@@ -1,14 +1,14 @@
 ﻿using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using ButtsBlazor.Api.Model;
 
 namespace ButtsBlazor.Api.Utils;
 
 public static class FileUtils
 {
-    public static async Task<byte[]> SaveAndHashAsync(this Stream stream, string path, CancellationToken ct=default)
+    public static async Task<byte[]> SaveAndHashAsync(this Stream stream, FilePath path, CancellationToken ct=default)
     {
-        if(Path.GetDirectoryName(path) is {} dir)
-            Directory.CreateDirectory(dir);
+        path.EnsureDirectory();
         await using var fileStream = File.Create(path, 0, FileOptions.Asynchronous);
         return await CopyToAndHashAsync(stream,  fileStream, ct);
     }
@@ -27,6 +27,13 @@ public static class FileUtils
         return computedHash;
     }
 
+    public static async Task<string?> TryReadAsBase64Contents(this FilePath path)
+    {
+        if (!path.Exists)
+            return null;
+        await using var fs = path.OpenRead();
+        return await fs.ConvertToBase64Async();
+    }
     public static async Task<string> ConvertToBase64Async(this Stream stream)
     {
         byte[] bytes;

@@ -1,0 +1,49 @@
+﻿<a class="go_gridItem @ExtraClasses" @onclick="@OnItemClick"><img src="@Href" alt="@Alt" /></a>
+@code {
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+    [Parameter]
+    public string? Href { get; set; }
+    [Parameter]
+    public string? Alt { get; set; }
+    [Parameter]
+    public string? LinkClass { get; set; }
+    [Parameter]
+    public GridItemDimension Width { get; set; } = GridItemDimension.One;
+
+    [Parameter]
+    public GridItemDimension Height { get; set; } = GridItemDimension.One;
+
+    [Parameter]
+    public bool Selected { get; set; }
+    [Parameter]
+    public GridItemSize Size { get; set; } = GridItemSize.OneByOne;
+
+
+    private string ExtraClasses { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        ExtraClasses = this switch
+        {
+            { Size: GridItemSize.TwoByTwo} => "go_gridItem-VIP",
+            { Size: GridItemSize.OneByTwo } => "go_gridItem-panorama",
+            { Size: GridItemSize.TwoByOne } => "go_gridItem-vertigo",
+            { Width: GridItemDimension.Two, Height: GridItemDimension.Two } => "go_gridItem-VIP",
+            { Width: GridItemDimension.Two, Height: GridItemDimension.One } => "go_gridItem-vertigo",
+            { Height: GridItemDimension.Two } => "go_gridItem-panorama",
+            _ => "go_gridItem-normal"
+        };
+        if (!String.IsNullOrEmpty(LinkClass))
+            ExtraClasses += " " + LinkClass;
+        if (Selected)
+            ExtraClasses += " selected";
+    }
+
+    private Task OnItemClick(MouseEventArgs arg)
+    {
+        return OnClick.InvokeAsync(arg);
+    }
+
+}

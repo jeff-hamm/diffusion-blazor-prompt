@@ -4,19 +4,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>AnyCPU</Platforms>
     <UserSecretsId>4af0d564-7a0f-4be3-9d69-5546e3105ed1</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <PropertyGroup Label="Configuration">
     <TypeScriptTarget>ES2020</TypeScriptTarget>
     <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
     <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
-    <TypeScriptOutDir></TypeScriptOutDir>
+    <TypeScriptOutDir>/</TypeScriptOutDir>
     <TypeScriptCompileOnSaveEnabled>False</TypeScriptCompileOnSaveEnabled>
-    <TypeScriptToolsVersion>4.9</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>5.3</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptModuleKind>none</TypeScriptModuleKind>
   </PropertyGroup>
@@ -24,77 +25,88 @@
 
   <ItemGroup>
     <Compile Remove="sampleSdXl\**" />
+    <Compile Remove="Scripts\prompts\node_modules\**" />
     <Compile Remove="wwwroot\butts_images\**" />
-    <Compile Remove="wwwroot\ts\node_modules\**" />
+    <Compile Remove="wwwroot\ts\**" />
+    <Compile Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
     <Content Remove="sampleSdXl\**" />
+    <Content Remove="Scripts\prompts\node_modules\**" />
     <Content Remove="wwwroot\butts_images\**" />
-    <Content Remove="wwwroot\ts\node_modules\**" />
+    <Content Remove="wwwroot\ts\**" />
+    <Content Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
     <EmbeddedResource Remove="sampleSdXl\**" />
+    <EmbeddedResource Remove="Scripts\prompts\node_modules\**" />
     <EmbeddedResource Remove="wwwroot\butts_images\**" />
-    <EmbeddedResource Remove="wwwroot\ts\node_modules\**" />
+    <EmbeddedResource Remove="wwwroot\ts\**" />
+    <EmbeddedResource Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
     <None Remove="sampleSdXl\**" />
+    <None Remove="Scripts\prompts\node_modules\**" />
     <None Remove="wwwroot\butts_images\**" />
-    <None Remove="wwwroot\ts\node_modules\**" />
+    <None Remove="wwwroot\ts\**" />
+    <None Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
   </ItemGroup>
 
 
   <ItemGroup>
-    <Content Remove="wwwroot\ts\buttQueue.ts" />
-    <Content Remove="wwwroot\ts\infiniteButts.ts" />
-    <Content Remove="wwwroot\ts\loadButtsWorker.ts" />
-    <Content Remove="wwwroot\ts\modes\defaultMode.ts" />
-    <Content Remove="wwwroot\ts\modes\indexMode.ts" />
-    <Content Remove="wwwroot\ts\modes\latestMode.ts" />
-    <Content Remove="wwwroot\ts\options.ts" />
-    <Content Remove="wwwroot\ts\pageManager.ts" />
-    <Content Remove="wwwroot\ts\pageModes.ts" />
-    <Content Remove="wwwroot\ts\share.ts" />
-    <Content Remove="wwwroot\ts\types.ts" />
-    <Content Remove="wwwroot\ts\utils.ts" />
-    <Content Remove="wwwroot\ts\worker\loadButtsWorker.ts" />
+    <Content Remove="wwwroot\js\worker\utils.d.ts" />
+    <Content Remove="wwwroot\worker\loadButtsWorker.d.ts" />
+    <Content Remove="wwwroot\worker\utils.d.ts" />
   </ItemGroup>
 
+
   <ItemGroup>
-    <None Remove="Scripts\infiniteButts.ts" />
-    <None Remove="Scripts\loadButtsWorker.ts" />
-    <None Remove="Scripts\pageManager.ts" />
-    <None Remove="Scripts\pageModes.ts" />
-    <None Remove="Scripts\types.ts" />
+    <None Remove="Scripts\prompts\documentListener.ts" />
+    <None Remove="Scripts\prompts\prompt.ts" />
   </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\ButtsBlazor.Api\ButtsBlazor.Api.csproj" />
     <ProjectReference Include="..\ButtsBlazor.Client\ButtsBlazor.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0-rc.2.23480.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0-rc.2.23480.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0-rc.2.23480.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0-rc.2.23480.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0-rc.2.23480.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0-rc.2.23479.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\infiniteButts.ts" />
-    <TypeScriptCompile Include="Scripts\loadButtsWorker.ts" />
-    <TypeScriptCompile Include="Scripts\pageManager.ts" />
-    <TypeScriptCompile Include="Scripts\pageModes.ts" />
-    <TypeScriptCompile Include="Scripts\types.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\buttQueue.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\infiniteButts.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\loadButtsWorker.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\modes\defaultMode.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\modes\indexMode.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\modes\latestMode.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\options.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\pageManager.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\pageModes.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\share.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\types.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\utils.ts" />
-    <TypeScriptCompile Include="wwwroot\ts\worker\loadButtsWorker.ts" />
+    <TypeScriptCompile Include="Scripts\prompts\documentListener.ts" />
+    <TypeScriptCompile Include="Scripts\prompts\prompt.ts" />
+    <TypeScriptCompile Include="Worker\loadButtsWorker.ts" />
+    <TypeScriptCompile Include="wwwroot\js\worker\loadButtsWorker.d.ts" />
+    <TypeScriptCompile Include="wwwroot\js\worker\utils.d.ts" />
+    <TypeScriptCompile Include="wwwroot\worker\loadButtsWorker.d.ts" />
+    <TypeScriptCompile Include="wwwroot\worker\utils.d.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\js\worker\loadButtsWorker.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\js\worker\loadButtsWorker.js.map">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\js\worker\tsconfig.tsbuildinfo">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\js\worker\utils.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\js\worker\utils.js.map">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

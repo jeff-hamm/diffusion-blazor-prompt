@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using System.IO;
 using ButtsBlazor.Api.Model;
+using ButtsBlazor.Api.Utils;
 using ButtsBlazor.Client.Utils;
 using ButtsBlazor.Services;
 using Microsoft.EntityFrameworkCore;
@@ -12,24 +14,22 @@ namespace ButtsBlazor.Api.Services;
 public class PromptQueue(ILogger<PromptQueue> logger, FileService fileService, IDbContextFactory<ButtsDbContext> contextFactory)
 {
     private ConcurrentQueue<PromptArgs> Pending { get; } = new();
-    private ConcurrentDictionary<Guid, PromptArgs> Processing { get; } = new();
+    private ConcurrentDictionary<int, PromptArgs> Processing { get; } = new();
 
-    public async Task<PromptArgs> Enqueue(string? prompt, string? negativePrompt, string? controlImageHash)
+    public async Task<PromptArgs> Enqueue(string? prompt, string? negativePrompt, int? controlImageId)
     {
-        var args = await CreatePromptArgs(prompt, negativePrompt, controlImageHash);
+        var args = await CreatePromptArgs(prompt, negativePrompt, controlImageId);
         Pending.Enqueue(args);
         return args;
     }
 
-    private async Task<PromptArgs> CreatePromptArgs(string? prompt, string? negativePrompt, string? controlImageHash)
+    private async Task<PromptArgs> CreatePromptArgs(string? prompt, string? negativePrompt, int? controlImageId)
     {
         await using var db = await contextFactory.CreateDbContextAsync();
-        var controlFile = controlImageHash != null
-            ? await db.Images.FirstOrDefaultAsync(img => img.Base64Hash == controlImageHash)
-            : null;
+        var controlFile = controlImageId.HasValue
+            ? await db.Images.FindAsync(controlImageId.Value) : null;
         var args = new PromptArgs()
         {
-            Id = Guid.NewGuid(),
             Prompt = prompt ?? "",
             Negative = negativePrompt,
             ControlFilePath = controlFile?.Path
@@ -37,10 +37,10 @@ public class PromptQueue(ILogger<PromptQueue> logger, FileService fileService, I
         db.PromptArgs.Add(args);
         db.Prompts.Add(new PromptEntity()
         {
-            Id = args.Id,
+            RowId = args.RowId,
             Args = args,
-            Enqueued = DateTimeOffset.UtcNow,
-            ControlImageId = controlFile?.Id,
+            Enqueued = DateTime.UtcNow,
+            ControlImageId = controlFile?.RowId,
             ControlImage = controlFile
         });
         await db.SaveChangesAsync();
@@ -52,24 +52,25 @@ public class PromptQueue(ILogger<PromptQueue> logger, FileService fileService, I
         if (!Pending.TryDequeue(out var args))
             return null;
         await StartProcessing(contextFactory, args);
-        Processing.AddOrUpdate(args.Id, args, (_, __) => args);
-        if (!String.IsNullOrEmpty(args.ControlFilePath)) 
-            args.ControlFile =  await fileService.ReadAsBase64Contents(args.ControlFilePath);
+        Processing.AddOrUpdate(args.RowId, args, (_, __) => args);
+        if (args.ControlFilePath?.FilePath != null)
+            args.ControlFile = await args.ControlFilePath.Value.FilePath.TryReadAsBase64Contents();
+
         return args;
     }
 
     private static async Task StartProcessing(IDbContextFactory<ButtsDbContext> contextFactory, PromptArgs args)
     {
         await using var db = await contextFactory.CreateDbContextAsync();
-        var prompt = await db.Prompts.FindAsync(args.Id);
+        var prompt = await db.Prompts.FindAsync(args.RowId);
         if (prompt != null)
         {
-            prompt.ProcessingStart = DateTimeOffset.UtcNow;
+            prompt.ProcessingStart = DateTime.UtcNow;
             await db.SaveChangesAsync();
         }
     }
 
-    public async Task<PromptEntity?> ProcessComplete(Guid id, string base64File)
+    public async Task<PromptEntity?> ProcessComplete(int id, string base64File)
     {
         if (!Processing.TryRemove(id, out var processed))
         {
@@ -80,14 +81,15 @@ public class PromptQueue(ILogger<PromptQueue> logger, FileService fileService, I
         var prompt = await db.Prompts.FindAsync(id);
         if (prompt == null) return null;
         var outputFile = await fileService.SaveOutputFile(processed.Prompt, base64File, ".png");
-        prompt.OutputImage = new ImageEntity()
+        var outputImg = new ImageEntity()
         {
-            Id = Guid.NewGuid(),
             Path = outputFile.Uri,
             Base64Hash = outputFile.Base64Hash,
             Type = ImageType.Output
         };
-        prompt.ProcessingCompleted = DateTimeOffset.UtcNow;
+        db.Add(outputImg);
+        prompt.OutputImageId = outputImg.RowId; 
+        prompt.ProcessingCompleted = DateTime.UtcNow;
         // Clear this out for garbage collection
         processed.ControlFile = null;
         await db.SaveChangesAsync();

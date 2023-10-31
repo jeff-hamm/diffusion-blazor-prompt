@@ -272,8 +272,10 @@ src/lib/nuget
 **/_Resharper.Caches/**
 *.clef
 **/compiledJs/*
-
+**/site-packages/*
+**/*.db
 **/TempVolumes/**
 **/env/**
 **/butts_images/**
 **/__pycache__/**
+**/js/**

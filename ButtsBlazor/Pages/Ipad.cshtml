@@ -1,0 +1,16 @@
+﻿@page "/ipad"
+@{
+    Layout = "Shared/_Layout";
+}
+@model ButtsBlazor.Server.Pages.IndexModel
+@{
+    ViewData["Title"] = "Infinite Uploads";
+}
+<form method="post"  action="/ipad">
+
+    <input type="file" accept="image/*" capture="environment" />
+    
+</form>
+@section Scripts {
+    <script src="/js/infiniteButts.js?ver=236daae22266d8a6f59d"></script>
+}

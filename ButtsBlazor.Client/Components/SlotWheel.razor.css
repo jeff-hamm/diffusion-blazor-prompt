@@ -1,0 +1,88 @@
+﻿.wheel {
+    background: #fafafa;
+    width: 300px;
+    height: 210px;
+    overflow: hidden;
+    border-radius: 5px;
+    margin: 5px;
+    position: relative;
+}
+.slot-text.static {
+/*    font-family: 'arcade';
+*/    color: hotpink;
+    opacity: .75;
+    font-size: 2rem;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.boxes {
+    /* transform: translateY(0); */
+    transition: transform 1s ease-in-out;
+}
+
+.slot-text.box {
+    font-size: 2rem;
+    text-align: center;
+}
+.box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/*
+.boxes.spinning.boxes-length-5 {
+    animation: spin5 2s linear infinite normal;
+}
+.boxes.spinning.boxes-length-6 {
+    animation: spin6 2.4s linear infinite normal;
+}*/
+
+@keyframes spin5 {
+    0% {
+        transform: translateY(-1050px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+@keyframes spin6 {
+    0% {
+        transform: translateY(-1260px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+.wheel .overlay {
+    background: -moz-linear-gradient(top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.25) 25%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 80%, rgba(0,0,0,1) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,1)), color-stop(25%,rgba(0,0,0,0.25)), color-stop(50%,rgba(0,0,0,0)), color-stop(80%,rgba(0,0,0,0.25)), color-stop(100%,rgba(0,0,0,1)));
+    background: -webkit-linear-gradient(top, rgba(0,0,0,1) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,1) 100%);
+    background: -o-linear-gradient(top, rgba(0,0,0,1) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,1) 100%);
+    background: -ms-linear-gradient(top, rgba(0,0,0,1) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,1) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,1) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,1) 100%);
+    border: 1px solid #000;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 2;
+}
+
+.wheel.chosen .overlay {
+    background: -moz-linear-gradient(top, rgba(0,0,0,.5) 0%, rgba(0,0,0,0.25) 25%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 80%, rgba(0,0,0,.5) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,.5)), color-stop(25%,rgba(0,0,0,0.25)), color-stop(50%,rgba(0,0,0,0)), color-stop(80%,rgba(0,0,0,0.25)), color-stop(100%,rgba(0,0,0,.5)));
+    background: -webkit-linear-gradient(top, rgba(0,0,0,.5) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,.5) 100%);
+    background: -o-linear-gradient(top, rgba(0,0,0,.5) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,.5) 100%);
+    background: -ms-linear-gradient(top, rgba(0,0,0,.5) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,.5) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,.5) 0%,rgba(0,0,0,0.25) 25%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.25) 80%,rgba(0,0,0,.5) 100%);
+}
+.wheel.chosen .slot-text.box {
+    height: 210px;
+}

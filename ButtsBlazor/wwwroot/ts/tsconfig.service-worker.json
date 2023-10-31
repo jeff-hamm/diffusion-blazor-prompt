@@ -1,7 +1,0 @@
-﻿{
-  "extends": "../generic-tsconfig.json",
-  "compilerOptions": {
-    "lib": [ "ES2020", "WebWorker" ]
-  },
-  "files": [ "loadButtsWorker.ts", "types.ts" ],
-}

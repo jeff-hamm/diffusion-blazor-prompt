@@ -6,20 +6,21 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.100-rc.2 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["ButtsBlazor/ButtsBlazor.csproj", "ButtsBlazor/"]
-COPY ["ButtsBlazor.Client/ButtsBlazor.Client.csproj", "ButtsBlazor.Client/"]
-RUN dotnet restore "ButtsBlazor/ButtsBlazor.csproj"
+COPY ["./ButtsBlazor/ButtsBlazor.Server.csproj", "ButtsBlazor/"]
+COPY ["./ButtsBlazor.Client/ButtsBlazor.Client.csproj", "ButtsBlazor.Client/"]
+RUN dotnet restore "ButtsBlazor/ButtsBlazor.Server.csproj"
 COPY . .
 WORKDIR "/src/ButtsBlazor"
-RUN dotnet build "ButtsBlazor.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "ButtsBlazor.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "ButtsBlazor.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "ButtsBlazor.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ButtsBlazor.dll"]
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "ButtsBlazor.Server.dll"]

@@ -1,167 +1,203 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
+﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Utils;
 using ButtsBlazor.Client.Utils;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using ButtsBlazor.Services;
+using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace ButtsBlazor.Services
+namespace ButtsBlazor.Api.Services;
+
+public class FileService(ImagePathService pathService, PromptOptions config, IDbContextFactory<ButtsDbContext> dbContextFactory, ILogger<FileService> logger)
 {
-    public enum FileTypes
+    public async Task FileScan(ImageType? imageType = null)
     {
-        ControlImage,
-        OutputImage,
+        ImageType[] imageTypes;
+        if (imageType != null)
+            imageTypes = new[] { imageType.Value };
+        else
+            imageTypes = Enum.GetValues<ImageType>();
+        foreach (var it in imageTypes)
+        {
+            var root = pathService.Directory(it).FilePath;
+            if (!Directory.Exists(root))
+            {
+                logger.LogInformation("Could not find path for {imageType} at {path}, skipping", it, root.Path);
+                continue;
+            }
+            logger.LogInformation("Starting file scan for {imageType} in {path}", it,root.Path);
+            await using var db = await dbContextFactory.CreateDbContextAsync();
+            foreach (var file in root.EnumerateFiles("*")
+                         .Where(f => config.SupportedImageExtensions.Contains(Path.GetExtension(f))))
+            {
+                var filePath = new FilePath(file);
+                var webPath = filePath.WebPath;
+                if (!db.Images.Any(i => i.Path == webPath) &&
+                    await filePath.TryReadAsBase64Contents() is { } base64)
+                    await AddImage(db, it, webPath, base64);
+            }
+        }
     }
-    public class FileService(IWebHostEnvironment env, PromptOptions config, IDbContextFactory<ButtsDbContext> dbContextFactory)
+    public async ValueTask<ImageEntity> SaveAndHashUploadedFile(string fileName, ImageType imageType, Func<Stream> readStream)
+    {
+        if (!pathService.TryGetValidExtension(fileName, out var extension))
+            throw new InvalidOperationException($"No support for file extension ext");
+        var tempPath = pathService.GetTempFilePath();
+        await using var stream = readStream();
+        try
+        {
+            var hash = await stream.SaveAndHashAsync(tempPath);
+            var base64Hash = Convert.ToBase64String(hash);
+            var relativePath = pathService.Image(imageType,FileUtils.Base64ToFileName(base64Hash, extension));
+            var image = new ImageEntity()
+            {
+                Path = relativePath,
+                Base64Hash = base64Hash,
+                Type = imageType
+            };
+            if (relativePath.FilePath is {Exists:false} outputPath)
+            {
+                outputPath.EnsureDirectory();
+                tempPath.Move(outputPath);
+                await SaveDbImage(image);
+            }
+            return image;
+        }
+        finally
+        {
+            tempPath.Delete();
+        }
+    }
+
+    private async Task SaveDbImage(ImageEntity image)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        dbContext.Images.Add(image);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private readonly ReaderWriterLock recentLock = new ReaderWriterLock();
+    private const int LockTimeout = 1000;
+    private WebPath[]? recentList;
+    private int imageCount;
+
+    public async Task<WebPath[]> GetLatestUploads(int count)
     {
 
-        public async Task<string?> ReadAsBase64Contents(string? relativePath)
+        try
         {
-            if (String.IsNullOrEmpty(relativePath))
-                return null;
-            var path = ToFilePath(relativePath);
-            if (!File.Exists(path))
-                return null;
-            await using var fs = File.OpenRead(path);
-            return await fs.ConvertToBase64Async();
-
+            await using var db = await dbContextFactory.CreateDbContextAsync();
+            recentLock.AcquireReaderLock(LockTimeout);
+            await RefreshRecent(db);
+            return recentList.Take(count).ToArray();
         }
-
-        public string? TryFindUploadFile(string controlImagePathOrHash)
+        finally
         {
-            var path = ToFilePath(controlImagePathOrHash);
-            if (File.Exists(path))
-                return controlImagePathOrHash;
-            path = ToRelativeUploadPath(controlImagePathOrHash);
-            if (File.Exists(path))
-                return controlImagePathOrHash;
-            if (TryFindExistingUpload(controlImagePathOrHash, out path))
-                return path;
-            return null;
+            recentLock.ReleaseReaderLock();
         }
+        //var di = new DirectoryInfo(ToFilePath(UploadPath)).EnumerateFiles().MaxBy(f => f.LastWriteTime);
+        //if (di == null) return null;
+        //var path = Path.GetRelativePath(env.WebRootPath, di.FullName);
+        //var hash = Path.GetFileNameWithoutExtension(path);
+        //return new HashedImage(path, hash);
+    }
 
-        public async ValueTask<SaveFileResult> SaveAndHashUploadedFile(IFormFile file)
+    [MemberNotNull("recentList")]
+    internal async Task RefreshRecent(ButtsDbContext db)
+    {
+        int? newCount = null;
+        if (recentList == null || (newCount = (await db.Images.CountAsync())) != imageCount)
         {
-            var ext = Path.GetExtension(file.FileName).ToLower();
-            if (!config.SupportedImageExtensions.Contains(ext))
-                throw new InvalidOperationException($"No support for file extension ext");
-            var tempPath = ToFilePath(config.TempUploadsPath, Path.GetRandomFileName());
-            await using var stream = file.OpenReadStream();
+            LockCookie? lockCookie = null;
+            if (recentLock.IsReaderLockHeld)
+                lockCookie = recentLock.UpgradeToWriterLock(LockTimeout);
+            else
+                recentLock.AcquireWriterLock(LockTimeout);
             try
             {
-                var hash = await stream.SaveAndHashAsync(tempPath);
-                var base64Hash = Convert.ToBase64String(hash);
-                var relativePath = ToRelativeUploadPath(FileUtils.Base64ToFileName(base64Hash, ext));
-                if (!RelativeFileExists(relativePath))
-                {
-                    var outputPath = ToFilePath(env.WebRootPath, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ??
-                                              throw new InvalidOperationException(
-                                                  $"Could not get directory name for {outputPath}"));
-                    File.Move(tempPath, outputPath);
-                    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-                    dbContext.Images.Add(new ImageEntity()
-                    {
-                        Id = Guid.NewGuid(),
-                        Path = relativePath,
-                        Base64Hash = base64Hash,
-                        Type = ImageType.ControlInput
-                    });
-                    await dbContext.SaveChangesAsync();
-                }
-                return new SaveFileResult(relativePath, base64Hash);
+                imageCount = newCount ?? await db.Images.CountAsync();
+                recentList = await db.Images.Where(i => i.Type != ImageType.Output).OrderByDescending(i => i.RowId)
+                    .Select(s => s.Path).Take(50).ToArrayAsync();
             }
             finally
             {
-                if(File.Exists(tempPath))
-                    File.Delete(tempPath);
-            }
-        }
-
-        public HashedImage? GetLatestUpload()
-        {
-            var di = new DirectoryInfo(ToFilePath(UploadPath)).EnumerateFiles().MaxBy(f => f.LastWriteTime);
-            if (di == null) return null;
-            var path = Path.GetRelativePath(env.WebRootPath, di.FullName);
-            var hash = Path.GetFileNameWithoutExtension(path);
-            return new HashedImage(path, hash);
-        }
-
-        public bool TryFindExistingUpload(string base64Hash, [NotNullWhen(true)] out string? relativePath)
-        {
-            relativePath = Directory.EnumerateFiles(ToFilePath(UploadPath), FileUtils.Base64ToFileNameWithoutExtension(base64Hash) + ".*").FirstOrDefault();
-            return relativePath != null;
-        }
-        public bool UploadedFileExists(string base64Hash, string extension) =>
-            File.Exists(ToFilePath(ToRelativeUploadPath(FileUtils.Base64ToFileName(base64Hash, extension))));
-        public bool RelativeFileExists(string relativePath) =>
-            File.Exists(ToFilePath(relativePath));
-
-        public string UploadPath => Path.Combine(config.ImagePathRoot, config.ImageUploadsPath);
-        public string OutputPath => Path.Combine(config.ImagePathRoot, config.ImageOutputPath);
-
-        public string ToRelativeUploadPath(string fileName) =>
-            Path.Combine(UploadPath, fileName);
-        public string ToRelativePath(string pathBase, string fileName) =>
-            Path.Combine(pathBase, fileName);
-
-
-        public string ToFilePath(string relativePath) =>
-            Path.Combine(env.WebRootPath, relativePath);
-        public string ToFilePath(string relativeDirectory, string relativePath) =>
-            ToFilePath(Path.Combine(relativeDirectory, relativePath));
-
-        public async Task<HashedImage> SaveOutputFile(string prompt, string base64File, string extension)
-        {
-            var baseFilename = FileDatePrefix +
-                               $"{FileUtils.ReplaceInvalidFileCharacters(prompt, "_")}";
-            var fileName = baseFilename + extension;
-            var ix = 0;
-            while (File.Exists(fileName))
-            {
-                ix++;
-                fileName = baseFilename + $"-({ix})" + extension;
-            }
-
-            using var ms = new MemoryStream(Convert.FromBase64String(base64File));
-            return await SaveFile(ms, OutputPath,fileName);
-        }
-
-        private async Task<HashedImage> SaveFile(Stream ms, string pathBase, string fileName)
-        {
-            var relativePath = ToRelativePath(pathBase,fileName);
-            var path = ToFilePath(relativePath);
-            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new InvalidOperationException());
-            var hash = await ms.SaveAndHashAsync(path);
-            return new HashedImage(relativePath, Convert.ToBase64String(hash));
-        }
-
-        private static string FileDatePrefix => DateTime.UtcNow.ToString("yyyyMMddhhmmss") + "-";
-
-        public async Task<HashedImage> SaveCannyFile(Guid id, IFormFile file)
-        {
-            var fileName = FileDatePrefix + "_" + id.ToString("N") + "_canny" + Path.GetExtension(file.FileName);
-            await using var fs = file.OpenReadStream();
-            var cannyFile = await SaveFile(fs, OutputPath, fileName);
-            await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var prompt = await dbContext.Prompts.FindAsync(id);
-            if (prompt != null)
-            {
-                prompt.CannyImage = new ImageEntity()
+                if (lockCookie.HasValue)
                 {
-                    Id = Guid.NewGuid(),
-                    Path = cannyFile.Uri,
-                    Base64Hash = cannyFile.Base64Hash,
-                    Type = ImageType.Canny
-                };
-                await dbContext.SaveChangesAsync();
+                    var v = lockCookie.Value;
+                    recentLock.DowngradeFromWriterLock(ref v);
+                }
+                else
+                    recentLock.ReleaseWriterLock();
             }
-
-            return cannyFile;
         }
     }
 
-    public record SaveFileResult(string RelativePath, string Base64Hash);
+
+    public bool TryFindExistingUpload(string base64Hash, [NotNullWhen(true)] out string? relativePath)
+    {
+        relativePath = pathService.Directory(ImageType.Upload).FilePath.EnumerateFiles(
+            FileUtils.Base64ToFileNameWithoutExtension(base64Hash) + ".*").FirstOrDefault();
+        return relativePath != null;
+    }
+    //public bool UploadedFileExists(string base64Hash, string extension) =>
+    //    pathService.GetUploadPath(FileUtils.Base64ToFileName(base64Hash, extension)).FilePath.Exists();
+    //public bool RelativeFileExists(string relativePath) =>
+    //    File.Exists(ToFilePath(relativePath));
+
+    public async Task<HashedImage> SaveOutputFile(string prompt, string base64File, string extension)
+    {
+        var baseFilename = FileDatePrefix +
+                           $"{FileUtils.ReplaceInvalidFileCharacters(prompt, "_")}";
+        var fileName = pathService.Image(ImageType.Output, baseFilename + extension).FilePath;
+        var ix = 0;
+        while (fileName.Exists)
+        {
+            ix++;
+            fileName = pathService.Image(ImageType.Output, baseFilename + $"-({ix})" + extension).FilePath;
+        }
+
+        using var ms = new MemoryStream(Convert.FromBase64String(base64File));
+        return await SaveFile(ms, fileName);
+    }
+
+    private async Task<HashedImage> SaveFile(Stream ms, FilePath path)
+    {
+        var hash = await ms.SaveAndHashAsync(path);
+        return new HashedImage(path.WebPath, Convert.ToBase64String(hash));
+    }
+
+    private static string FileDatePrefix => DateTime.UtcNow.ToString("yyyyMMddhhmmss") + "-";
+
+    public async Task<HashedImage> SaveFile(Guid id, string fileName,Func<Stream> readStream, ImageType imageType)
+    {
+        var path = pathService.Image(imageType, FileDatePrefix + "_" + id.ToString("N") + "_" + imageType.ToString().ToLower() + Path.GetExtension(fileName));
+        await using var fs = readStream();
+        var cannyFile = await SaveFile(fs, path.FilePath);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var prompt = await dbContext.Prompts.FindAsync(id);
+        if (prompt != null)
+        {
+            var img = await AddImage(dbContext,imageType, cannyFile.Uri, cannyFile.Base64Hash);
+            prompt.CannyImageId = img.RowId;
+
+        }
+
+        return cannyFile;
+    }
+
+    private async Task<ImageEntity> AddImage(ButtsDbContext dbContext,ImageType imageType, WebPath path, string hash)
+    {
+        var img = new ImageEntity()
+        {
+            Path = path,
+            Base64Hash = hash,
+            Type = imageType
+        };
+        dbContext.Add(img);
+        logger.LogDebug("Inserting image at {path} with type {imageType} and {id}",img.Path,img.Type, img.RowId);
+        await dbContext.SaveChangesAsync();
+        return img;
+    }
 }

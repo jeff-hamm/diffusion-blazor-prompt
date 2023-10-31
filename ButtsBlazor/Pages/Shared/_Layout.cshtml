@@ -1,0 +1,32 @@
+﻿@using ButtsBlazor.Server.Services
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Infinite Butts - AI Butt Generator</title>
+    <link rel="stylesheet" href="/css/bootstrap.css?f64d1d4ec9be342c62ef"></link>
+    <link rel="stylesheet" href="/css/vendors.css?9743037eb5147b8b26f8"></link>
+    <link rel="stylesheet" href="app.css" />
+    <meta property="og:title" content="Infinite Butts" />
+    <meta property="og:description" content="An infinite stream of AI generated butts." />
+    <meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path)" />
+</head>
+<body>
+<div class="container">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
+
+    <script src="/js/runtime.js?ver=b7ac93f6469e6740a92e"></script>
+
+    <script src="/js/jquery.js?ver=90fea367eabd675a2943"></script>
+
+    <script src="/js/bootstrap.js?ver=d60e4331c49468a03dc8"></script>
+
+    <script src="/js/vendors.js?ver=3ca6d410eb70b0bb4fb9"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

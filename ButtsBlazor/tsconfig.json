@@ -1,0 +1,27 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "composite": true,
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "ES2020",
+    "moduleResolution": "Node",
+    "module": "ES2020",
+    "outDir": "wwwroot/ts",
+    "lib": [ "ES2020", "DOM" ],
+    "rootDir": "."
+  },
+  "include": [ "Scripts/**/*", "Pages/**/*" ],
+  "paths": {
+    "*": [
+      "*",
+      "Scripts/*",
+      "Pages/*",
+    ]
+  },
+  "exclude": [ "**/*.cshtml", "Worker/**/*" ],
+  "baseUrl": ".",
+  "moduleSuffixes": [ ".cshtml", "" ]
+}

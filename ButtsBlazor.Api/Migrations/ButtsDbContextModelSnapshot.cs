@@ -19,12 +19,15 @@ namespace ButtsBlazor.Api.Migrations
 
             modelBuilder.Entity("ButtsBlazor.Api.Model.ImageEntity", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("RowId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Base64Hash")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreationDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Path")
@@ -34,39 +37,44 @@ namespace ButtsBlazor.Api.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
+                    b.HasKey("RowId");
+
+                    b.HasIndex("Path")
+                        .IsUnique();
+
+                    b.HasIndex("Type");
 
                     b.ToTable("Images");
                 });
 
             modelBuilder.Entity("ButtsBlazor.Api.Model.PromptEntity", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("RowId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ArgsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CannyImageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ControlImageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Enqueued")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ArgsId")
+                    b.Property<int?>("OutputImageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ProcessingCompleted")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CannyImageId")
+                    b.Property<DateTime?>("ProcessingStart")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ControlImageId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("Enqueued")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("OutputImageId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("ProcessingCompleted")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("ProcessingStart")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
+                    b.HasKey("RowId");
 
                     b.HasIndex("ArgsId");
 
@@ -81,9 +89,9 @@ namespace ButtsBlazor.Api.Migrations
 
             modelBuilder.Entity("ButtsBlazor.Services.PromptArgs", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("RowId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("CannyHigh")
                         .HasColumnType("INTEGER");
@@ -113,9 +121,28 @@ namespace ButtsBlazor.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("RowId");
 
                     b.ToTable("PromptArgs");
+                });
+
+            modelBuilder.Entity("Configuration.EFCore.SettingEntity", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Environment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Application")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key", "Environment", "Application");
+
+                    b.ToTable("Settings", (string)null);
                 });
 
             modelBuilder.Entity("ButtsBlazor.Api.Model.PromptEntity", b =>

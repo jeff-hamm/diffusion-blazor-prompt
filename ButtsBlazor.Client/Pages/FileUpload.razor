@@ -1,10 +1,12 @@
 ﻿@page "/upload"
-@inject HttpClient Http
+
+@inject IButtsApiClient Client
 @inject ILogger<Prompt> Logger
 @inject PromptOptions Options
 
 @inject IJSRuntime JSRuntime;
 @using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Client.Services
 @implements IAsyncDisposable
 
 <h3>File Upload</h3>
@@ -16,7 +18,7 @@ else
 {
 }
 <div @ref="fileDropContainer" class="file-drop-zone @HoverClass" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondragover="OnDragEnter">
-    <InputFile OnChange="@OnChange" @ref="inputFile" />
+    <InputFile OnChange="@OnChange" @ref="inputFile" accept="image/*" capture="environment" />
 </div>
 <div class="error-message-container">
     <p>@ErrorMessage</p>

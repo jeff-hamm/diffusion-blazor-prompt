@@ -9,7 +9,6 @@ using static System.Net.WebRequestMethods;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
-using Telerik.SvgIcons;
 
 namespace ButtsBlazor.Client.Pages
 {
@@ -47,24 +46,12 @@ namespace ButtsBlazor.Client.Pages
         {
             ErrorMessage = string.Empty;
 
-            using var content = new MultipartFormDataContent();
             var file = e.File;
             try
             {
                 isLoading = true;
                 StateHasChanged();
-                var fileContent = new StreamContent(file.OpenReadStream(Options.MaxFileSize));
-
-                fileContent.Headers.ContentType =
-                    new MediaTypeHeaderValue(file.ContentType);
-                content.Add(
-                content: fileContent,
-                    name: "\"file\"",
-                fileName: file.Name);
-
-
-                var response = await Http.PostAsync("api/ControlImages", content);
-                uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
+                uploadResult = await Client.UploadFile(file);
                 if (uploadResult?.Uploaded == true && uploadResult.Path != null)
                     imageSources.Add(uploadResult.Path);
 
@@ -91,7 +78,6 @@ namespace ButtsBlazor.Client.Pages
                 await _filePasteFunctionReference.InvokeVoidAsync("dispose");
                 await _filePasteFunctionReference.DisposeAsync();
             }
-
             if (_filePasteModule != null)
             {
                 await _filePasteModule.DisposeAsync();

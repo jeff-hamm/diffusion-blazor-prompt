@@ -1,0 +1,115 @@
+﻿@page "/generate"
+@using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Client.Services
+@rendermode InteractiveWebAssembly
+@implements IAsyncDisposable
+@inject IButtsApiClient Client
+@inject NavigationManager Navigation
+@inject PromptOptions Options
+@inject IJSRuntime JsRuntime;
+<style>
+    .gridOverflow {
+        --gridGap: 1px;
+        --itemMinWidth: 200px;
+        --itemAspectRatio: 1;
+        --itemRounding: 6px;
+        --linkActionIcon: "\ud83c\udf51";
+    }
+</style>
+<section>
+    @*     <Spinner IsVisible="LoaderVisible" Text="@GeneratingText">
+        <div class="input-image-container">
+            <img src="@Image" class="input-image" />
+        </div>
+    </Spinner>
+ *@ 
+    <IndexSelector MaxIndex="@(imageSrc?.Length??1)" OnItemSelected="Next" Module="/js/generate.js"></IndexSelector>
+        <FullscreenImage Title="@Prompt" Image="@image" SrcImage="@Image">
+        </FullscreenImage>
+@*         <div style="max-width: 800px; margin: auto;">
+            <div class="gridOverflow go-actionIcon ssg fs">
+                @foreach (var img in imageSrc)
+                {
+                    <a class="go_gridItem" href="@img" >
+                        <img src="@img" alt="@Prompt"/>
+                    </a>
+                }
+            </div>
+        </div>
+ *@   
+</section>
+
+@code {
+
+    [Parameter, SupplyParameterFromQuery]
+    public string? Image { get; set; }
+    [Parameter, SupplyParameterFromQuery]
+    public string? Prompt { get; set; }
+
+    private string GeneratingText { get; set; } = "";
+
+    private string[]? imageSrc;
+    private string? image;
+
+    private IJSObjectReference? _promptModule;
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        generatorConfig = new GeneratorPromptConfig()
+        {
+            NumOutputs = Options.NumGeneratedImages
+        };
+        GeneratingText = $"Generating {Prompt}";
+        LoaderVisible = true;
+    }
+
+    private GeneratorPromptConfig? generatorConfig;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            LoaderVisible = true;
+            StateHasChanged();
+            try
+            {
+                _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
+                await JsRuntime.InvokeVoidAsync("butts.configure",
+                    Options.GradioUri, null);
+                   imageSrc = await JsRuntime.InvokeAsync<string[]>("butts.generate",
+                    Image, Prompt, "", generatorConfig);
+                if (imageSrc.Length > 0)
+                    image = imageSrc[0];
+            }
+            finally
+            {
+                LoaderVisible = false;
+                StateHasChanged();
+            }
+//            await JsRuntime.InvokeVoidAsync("butts.gallery");
+        }
+    }
+
+    public bool LoaderVisible { get; set; }
+
+    private async Task Next()
+    {
+        if (imageSrc?.Length > 0)
+        {
+            await Client.UploadFile(imageSrc[0]);
+        }
+        Navigation.NavigateTo("/input");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+//        await JsRuntime.InvokeVoidAsync("butts.closeGallery");
+        if (_promptModule != null)
+        {
+            await JsRuntime.InvokeVoidAsync("butts.detachAll");
+            await _promptModule.DisposeAsync();
+            _promptModule = null;
+        }
+    }
+
+}

@@ -1,0 +1,81 @@
+﻿<style>
+    .gridOverflow {
+        --gridGap: @(GridGap + "px");
+        --itemMinWidth: @(ItemWidth + "px");
+        --itemAspectRatio: 1;
+        --itemRounding: @(ItemRounding + "px");
+        --linkActionIcon: "@ActionIcon";
+    }
+
+</style>
+<div style="max-width: @(calculatedMaxWidth)px; margin: auto;" tabindex="0" @ref="containingDiv">
+    <div class="gridOverflow @ExtraClasses go-actionIcon">
+        @ChildContent
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public bool Animate { get; set; } = true;
+    [Parameter]
+    public bool Zoom { get; set; }
+    [Parameter]
+    public bool Masonry { get; set; }
+    [Parameter]
+    public int Columns { get; set; } = 4;
+
+    [Parameter]
+    public int GridGap { get; set; } = 1;
+    [Parameter]
+    public int ItemWidth { get; set; } = 200;
+
+    [Parameter]
+    public int ItemRounding { get; set; } = 6;
+
+    [Parameter]
+    public string ActionIcon { get; set; } = "\ud83c\udf51";
+
+    [Parameter]
+    public int? MaxWidth { get; set; }
+
+    private int calculatedMaxWidth;
+    ElementReference containingDiv;
+
+
+    private string? ExtraClasses { get; set; }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        ExtraClasses = "";
+
+        void AddClass(string cls)
+        {
+            if (ExtraClasses.Length > 0)
+                ExtraClasses += " ";
+            ExtraClasses +=  cls;
+        }
+        calculatedMaxWidth = MaxWidth ?? (Columns * ItemWidth) + ((Columns-1) * GridGap);
+        if (Animate)
+            AddClass("go-3Dfx");
+        if (Zoom)
+        {
+            AddClass("go-zoomFx");
+            calculatedMaxWidth += ItemWidth;
+        }
+        if (Masonry)
+            AddClass("go-masonry");
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+            await containingDiv.FocusAsync();
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

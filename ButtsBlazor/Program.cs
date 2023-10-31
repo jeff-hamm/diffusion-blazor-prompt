@@ -1,35 +1,50 @@
 using ButtsBlazor.Api.Model;
+using ButtsBlazor.Api.Services;
 using ButtsBlazor.Client.Pages;
 using ButtsBlazor.Hubs;
 using ButtsBlazor.Server.Components;
 using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
+using Configuration.EFCore;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
 //builder.Services.Configure<ButtOptions>(builder.Configuration.GetSection(nameof(ButtOptions)));
 //builder.Services.AddButtPrompts();
-builder.Services.AddPrompts(builder.Configuration);
-builder.Services.AddSignalR().AddHubOptions<PromptHub>(opts =>
+builder.Services.AddButts(builder.Configuration);
+builder.Services.AddSignalR().AddHubOptions<NotifyHub>(opts =>
 {
     opts.MaximumReceiveMessageSize = Int32.MaxValue;
 });
 builder.Services.AddButtsDb();
-builder.Services.AddControllers();
-builder.Services.AddScoped(sp =>
+
+builder.Configuration.AddEFCoreConfiguration<ButtsDbContext>(options =>
 {
-    var client = new HttpClient();
-    var uri = sp.GetService<IWebAssemblyHostEnvironment>()?.BaseAddress;
-    if (uri != null)
-        client.BaseAddress = new Uri(uri);
-    else
-        client.BaseAddress = new Uri("http://localhost:5023");
-    return client;
-});
+    options.UseSqlite(ButtsDbContext.DefaultConnectionString);
+}, reloadOnChange: true, onLoadException: ex => ex.Ignore = true);
+builder.Services.AddControllers();
+builder.Services.AddRazorPages()
+//    .AddRazorRuntimeCompilation()
+    ;
+//builder.Services.AddHttpClient("").ConfigureHttpClient((sp,c) =>
+//{
+//    var client = new HttpClient();
+//    var uri = sp.GetService<IWebAssemblyHostEnvironment>()?.BaseAddress;
+//    if (uri != null)
+//        client.BaseAddress = new Uri(uri);
+//    else
+//    {
+//        var request = sp.GetService<HttpContext>();
+//        if (request?.Request?.Host.Value is not { } host)
+//            host = "locahost:5023";
+//        client.BaseAddress = new Uri($"http://{host}");
+//    }
+
+//});
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
+//    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
@@ -49,14 +64,14 @@ else
 
 //app.UseHttpsRedirection();
 app.UseStaticFiles();
-//app.UseRouting();
+app.UseRouting();
 app.UseAntiforgery();
 app.MapControllers();
-app.MapHub<PromptHub>("/prompt");
+app.MapHub<NotifyHub>("/notify");
+app.MapRazorPages();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
+//    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Wizard).Assembly);
-    ;
-await app.MigrateDatabase();
+    .AddAdditionalAssemblies(typeof(Input).Assembly);
+await app.Services.MigrateDatabase();
 app.Run();

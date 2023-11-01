@@ -1,11 +1,12 @@
 ﻿.wheel {
-    background: #fafafa;
+    background: lightblue;
     width: 300px;
     height: 210px;
     overflow: hidden;
     border-radius: 5px;
     margin: 5px;
     position: relative;
+    box-shadow: 2px 3px 6px 1px black;
 }
 .slot-text.static {
 /*    font-family: 'arcade';
@@ -16,6 +17,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    font-weight: bold;
 }
 
 .boxes {

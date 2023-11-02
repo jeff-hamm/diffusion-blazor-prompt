@@ -4,8 +4,8 @@
     height: 100vh;
 }
 
-    .loading-container i {
-        color: hotpink;
+.loading-container i {
+    color: hotpink;
 }
 
 .loading-text {

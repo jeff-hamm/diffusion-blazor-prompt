@@ -1,0 +1,199 @@
+﻿@using ButtsBlazor.Shared.ViewModels
+@implements IAsyncDisposable
+@implements IButtonPressListener
+<div class="modal fade @(IsVisible ? "show" : "")" tabindex="-1" id="@ElementId" style="@(IsVisible ? "display:block;'" : "")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Title
+                    <span class="mb-2 text-muted">
+                        <CountdownTimer Run="@(TimeoutSeconds.HasValue && IsVisible)" DisplayCountdown="@IsVisible" TimerSeconds="@TimeoutSeconds.Value" TimerSuccess="@TimerExpired"></CountdownTimer>
+                    </span>
+                    </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        @onclick="() => OnConfirmationChange(false)">
+                </button>
+            </div>
+            <div class="modal-body">
+                @Message
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary @(SelectedButton == 0 ? "selected" : "")" data-bs-dismiss="modal"
+                        @onclick="() => OnConfirmationChange(false)">
+                    @CancelText
+                </button>
+                <button type="button" class="btn btn-primary @(SelectedButton == 1 ? "selected" : "")" data-bs-dismiss="modal"
+                        @onclick="() => OnConfirmationChange(true)" @ref="@ConfirmBtn">
+                    @ConfirmText
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int SelectedButton { get; set; } = 1;
+    [Parameter]
+    public string ElementId { get; set; } = "ConfirmationModal";
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
+
+    [Parameter]
+    public string ConfirmText { get; set; } = "Ok";
+    [Parameter]
+    public string Title { get; set; } = "Confirm";
+
+    [Parameter]
+    public string Message { get; set; } = "Are you sure?";
+
+    [Parameter]
+    public int? TimeoutSeconds { get; set; }
+    [Parameter]
+    public EventCallback<bool> Confirmed { get; set; }
+    [Parameter]
+    public EventCallback<bool> Cancelled { get; set; }
+    [Parameter]
+    public EventCallback TimedOut { get; set; }
+    [Parameter]
+    public EventCallback<bool> ConfirmationChanged { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await  base.OnParametersSetAsync();
+        if(ConfirmBtn.HasValue && IsVisible)
+            await ConfirmBtn.Value.FocusAsync();
+    }
+
+    public class ShowConfirmationResult : IAsyncDisposable
+    {
+        public ShowConfirmationResult()
+        {
+            cts = new CancellationTokenSource();
+            CancellationToken = cts.Token;
+        }
+        private CancellationTokenSource? cts;
+        public CancellationToken CancellationToken { get; }
+        public ConfirmationResult? Result { get; private set; }
+
+        public async Task<ConfirmationResult> Closed(ConfirmationResult result)
+        {
+
+            if (cts != null)
+            {
+                if (!cts.IsCancellationRequested)
+                    await cts.CancelAsync();
+                cts.Dispose();
+                cts = null;
+            }
+            if (Result == null)
+                Result = result;
+            return Result.Value;
+        }
+        public bool IsOpen() => cts?.IsCancellationRequested == false && Result == null;
+
+        public async ValueTask DisposeAsync()
+        {
+            await Closed(ConfirmationResult.None);
+        }
+
+        public async Task<ConfirmationResult> WaitForResult()
+        {
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, CancellationToken);
+                return Result ?? ConfirmationResult.None;
+            }
+            catch(OperationCanceledException)
+            {
+                return Result ?? ConfirmationResult.None;
+            }
+        }
+    }
+
+    ShowConfirmationResult? activeDialog;
+    public async Task<ShowConfirmationResult> Show(string? message = null, string? title = null, string confirmText = "Yes", string cancelText = "No", int? timeout = null)
+    {
+        IsVisible = true;
+        Title = title ?? Title;
+        Message = message ?? Message;
+        ConfirmText = confirmText;
+        CancelText = cancelText;
+        TimeoutSeconds = timeout;
+        Console.WriteLine("{0}: Showing confirmation {1}, Timeout {2}", DateTime.Now, Message, TimeoutSeconds.HasValue ? DateTime.Now.AddSeconds(TimeoutSeconds.Value) : null);
+        StateHasChanged();
+        if (activeDialog?.IsOpen() == true)
+        {
+            await activeDialog.Closed(ConfirmationResult.Replaced);
+            await activeDialog.DisposeAsync();
+            activeDialog = null;
+        }
+        var dialogResult = new ShowConfirmationResult();
+        activeDialog = dialogResult;
+        return dialogResult;
+    }
+    protected async Task OnConfirmationChange(bool value)
+    {
+        Console.WriteLine("{0}: Confirmation selected {1}. {2}", DateTime.Now, value, Message);
+        IsVisible = false;
+        if (value)
+        {
+            activeDialog?.Closed(ConfirmationResult.Confirm);
+            await Confirmed.InvokeAsync(value);
+        }
+        else
+        {
+            activeDialog?.Closed(ConfirmationResult.Cancel);
+            await Cancelled.InvokeAsync(value);
+        }
+        await ConfirmationChanged.InvokeAsync(value);
+        StateHasChanged();
+    }
+
+    private async Task TimerExpired()
+    {
+        if(IsVisible) 
+            Console.WriteLine("{0}: Confirmation Expired {1}.",DateTime.Now, Message);
+        IsVisible = false;
+        activeDialog?.Closed(ConfirmationResult.Timeout);
+        await TimedOut.InvokeAsync();
+        StateHasChanged();
+    }
+
+    public ElementReference? ConfirmBtn { get; set; }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (activeDialog != null) await activeDialog.DisposeAsync();
+    }
+
+    public async Task OnButtonPressed(GamepadButton button)
+    {
+        switch (button)
+        {
+            case GamepadButton.Right:
+                if (SelectedButton == 0)
+                {
+                    SelectedButton = 1;
+                    StateHasChanged();
+                }
+                break;
+            case GamepadButton.Left:
+                if (SelectedButton == 1)
+                {
+                    SelectedButton = 0;
+                    StateHasChanged();
+                }
+                break;
+            case GamepadButton.Primary:
+            case GamepadButton.Start:
+                await OnConfirmationChange(SelectedButton == 1);
+                break;
+        }
+    }
+
+}

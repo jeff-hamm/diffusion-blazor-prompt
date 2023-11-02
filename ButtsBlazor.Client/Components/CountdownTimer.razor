@@ -1,0 +1,151 @@
+﻿@using System.Diagnostics.CodeAnalysis
+@implements IAsyncDisposable
+
+@if (DisplayCountdown && IsRunning && remaining != null)
+{
+    <span class="countdown-timer">@(System.String.Format(CountdownFormat,(int)remaining.Value.TotalSeconds))</span>
+}
+
+
+@code {
+
+    [Parameter]
+    public bool DisplayCountdown { get; set; } = true;
+
+    [Parameter]
+    public string CountdownFormat { get; set; } = "{0}";
+    [Parameter]
+    public bool Run { get; set; }
+    [Parameter]
+    public int? TimerSeconds { get; set; }
+
+    public int ProgressMilliseconds { get; set; } = 1000;
+    [Parameter] 
+    public EventCallback<(TimeSpan elapsed, TimeSpan remaining)> Progress { get; set; }
+    [Parameter]
+    public EventCallback<bool> TimerCompleted { get; set; }
+    [Parameter]
+    public EventCallback TimerSuccess { get; set; }
+    [Parameter]
+    public EventCallback TimerRestarting { get; set; }
+    [Parameter]
+    public EventCallback TimerCancelled { get; set; }
+    [Parameter]
+    public EventCallback TimerStarted { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        await RunTimer();
+    }
+
+    public async Task Start()
+    {
+        Run = true;
+        await RunTimer();
+        StateHasChanged();
+    }
+    public async Task Stop()
+    {
+        Run = false;
+        await RunTimer();
+        StateHasChanged();
+    }
+
+    private Timer? timer;
+    [MemberNotNullWhen(true, nameof(startTime))]
+    private bool IsRunning
+    {
+        get => startTime != null;
+        set => startTime = value ? startTime ?? DateTime.Now : null;
+    }
+
+    private DateTime? startTime;
+
+    private async Task RunTimer()
+    {
+        if (!Run || TimerSeconds == null)
+        {
+            if (IsRunning)
+            {
+                await Stop(false);
+            }
+            return;
+        }
+
+        timer ??= new Timer(_ =>
+        {
+            IsRunning = false;
+            InvokeAsync(async() =>
+            {
+                await Stop(true);
+            });
+        }, null, Timeout.Infinite, Timeout.Infinite);
+        if (IsRunning)
+        {
+            await TimerRestarting.InvokeAsync();
+            Console.WriteLine("Restarting timer");
+        }
+        IsRunning = true;
+        startTime = DateTime.Now;
+        await TimerStarted.InvokeAsync();
+        await StartProgress();
+        var period = TimeSpan.FromSeconds(TimerSeconds.Value);
+        Console.WriteLine("{0}: Starting timer, {1}", DateTime.Now, period);
+        timer.Change(period, Timeout.InfiniteTimeSpan);
+    }
+
+    private async Task Stop(bool success)
+    {
+        Console.WriteLine("{0}: Stopping timer {1}, was: {2}",DateTime.Now, success, IsRunning);
+        IsRunning = false;
+        await StopProgress();
+        if (success)
+            await TimerSuccess.InvokeAsync();
+        else 
+            await TimerCancelled.InvokeAsync();
+        await TimerCompleted.InvokeAsync(success);
+        StateHasChanged();
+    }
+
+    private Timer? progressTimer;
+    private TimeSpan? remaining;
+    private async Task StartProgress()
+    {
+        var period = TimeSpan.FromMilliseconds(ProgressMilliseconds);
+        progressTimer ??= new Timer(_ =>
+        {
+            if (!IsRunning || TimerSeconds == null) return;
+            var now = DateTime.Now;
+            remaining = startTime.Value.AddSeconds(TimerSeconds.Value).Subtract(now);
+            InvokeAsync(async () =>
+            {
+                await Progress.InvokeAsync((now.Subtract(startTime.Value),remaining.Value));
+                StateHasChanged();
+            });
+        },null,period,period);
+    }
+
+    private async Task StopProgress()
+    {
+        if (progressTimer != null)
+        {
+            await progressTimer.DisposeAsync();
+            progressTimer = null;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopProgress();
+        IsRunning = false;
+        if (timer != null) await timer.DisposeAsync();
+    }
+
+}

@@ -1,4 +1,5 @@
 ﻿import { DotNet } from "@microsoft/dotnet-js-interop";
+import { GamepadListener } from 'gamepad.js';
 
 //interface Listener {
 //    Component: DotNet.DotNetObject,
@@ -71,7 +72,7 @@ export class ComponentEventListener implements EventListenerObject {
             }
         }
     }
-    handleEvent(e:any) {
+    async handleEvent(e:any) {
         try {
             console.debug("handleEvent", this.id(), this.isDisposed)
             if (this.isDisposed) {
@@ -103,29 +104,87 @@ export function addDocumentListener(componentRef: DotNet.DotNetObject, eventName
     return r;
 }
 
-//export function addDocumentListener2(componentRef: DotNet.DotNetObject, eventName: string, methodName: string) {
-//    const listener: Listener = {
-//        Component: componentRef,
-//        Method: methodName
-//    };
+async function gamepadCode(code: string) {
+    console.debug("gamepadCode", code);
+    for (const l of listeners) {
+        await l.handleEvent({
+            code,
+            key: code
+        });
+    }
+}
+const listener = new GamepadListener();
 
-//    let l = listeners.get(eventName);
-//    if (typeof (l) == "undefined" || l === null) {
-//        l = [listener];
-//        listeners.set(eventName, l);
-//        window.document.addEventListener(eventName, e => eventHandler(eventName,e));
-//    } else {
-//        l.push(listener);
-//    }
-//}
+listener.on('gamepad:button', async event => {
+    const {
+        index,// Gamepad index: Number [0-3].
+        button, // Button index: Number [0-N].
+        value, // Current value: Number between 0 and 1. Float in analog mode, integer otherwise.
+        pressed, // Native GamepadButton pressed value: Boolean.
+        gamepad, // Native Gamepad object
+    } = event.detail;
+    if(!pressed)
+        return;
+    let code = "";
+    switch (button) {
+        // B
+        case 1:
+        // Y
+        case 4:
+            code = "Primary";
+            break;
+        // A
+        case 0:
+        // X
+        case 3:
+            code = "Secondary";
+            break;
+        // left shoulder
+        case 6:
+            code = "Left";
+            break;
+        // Select
+        case 10:
+            code = "Select";
+            break;
+        // right shoulder
+        case 7:
+            code = "Right";
+        // Start
+        case 11:
+            code = "Start";
+            break;
+    }
+    if (code)
+        await gamepadCode(code);
+});
+listener.on('gamepad:axis', async event => {
+    const {
+        index,// Gamepad index: Number [0-3].
+        axis, // Axis index: Number [0-N].
+        value, // Current value: Number between -1 and 1. Float in analog mode, integer otherwise.
+        gamepad, // Native Gamepad object
+    } = event.detail;
+    let code = "";
+    if(value == 0)
+        return;
 
-//export function removeDocumentListener(componentRef: DotNet.DotNetObject, eventName: string) {
-//    let l = listeners.get(eventName);
-//    if (typeof (l) != "undefined" && l !== null) {
-//        const ix = l.findIndex((v) => (<any>v.Component)._id == (<any>componentRef)._id);
-//        if (ix > -1) {
-//            l.splice(ix, 1);
-//            listeners.set(eventName, l);
-//        }
-//    }
-//}
+    if (value == -1) {
+        if (axis == 0) {
+            code = "Left";
+        }
+        else if (axis == 1) {
+            code = "Up";
+        }
+    } else if (value == 1) {
+        if (axis == 0) {
+            code = "Right";
+        } else if (axis == 1) {
+            code = "Down";
+        }
+    }
+    if (code)
+       await gamepadCode(code);
+});
+
+listener.start();

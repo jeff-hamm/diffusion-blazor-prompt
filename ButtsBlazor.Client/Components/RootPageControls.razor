@@ -1,0 +1,159 @@
+﻿@using ButtsBlazor.Shared.ViewModels
+@using ButtsBlazor.Client.Utils
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+@inject PromptOptions Options
+@implements IAsyncDisposable
+
+<ButtonHandler ButtonPress="OnButtonPress"></ButtonHandler>
+<Confirm ConfirmText="Yup" CancelText="Nope" TimeoutSeconds="60" @ref="Confirm"></Confirm>
+<Spinner @bind-IsVisible="IsLoading"></Spinner>
+
+@code {
+    [Parameter]
+    public bool IsLoading { get; set; }
+    [Parameter]
+    public EventCallback ReloadRequested { get; set; }
+    private IJSObjectReference? jsModule;
+    private Timer? activityTimer;
+    private List<EventCallback<GamepadButton>> ButtonPressHandlers { get; } = new();
+    private HashSet<object> handlerReceivers { get; } = new();
+    public void AddHandler(object receiver, Func<GamepadButton, Task> handler)
+    {
+        if (handlerReceivers.Contains(receiver)) return;
+        handlerReceivers.Add(receiver);
+        ButtonPressHandlers.Add(EventCallback.Factory.Create(receiver, handler));
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        ResetActivityTimeout();
+
+        return base.OnParametersSetAsync();
+    }
+
+    [Parameter]
+    public bool DefaultButtonHandlers { get; set; } = true;
+    [Parameter]
+    public EventCallback<GamepadButton> ButtonPress { get; set; }
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            if (IsLoading)
+            {
+                jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js");
+
+                IsLoading = false;
+                //                StateHasChanged();
+            }
+        }
+
+    }
+
+    private async Task OnButtonPress(GamepadButton obj)
+    {
+        ResetActivityTimeout();
+        if (Confirm.IsVisible)
+        {
+            Console.WriteLine("Sending to confirm");
+            await Confirm.OnButtonPressed(obj);
+            return;
+        }
+        if (DefaultButtonHandlers)
+        {
+            switch (obj)
+            {
+                case GamepadButton.Start:
+                    await ConfirmRestart();
+                    return;
+                case GamepadButton.Select:
+                    await ConfirmRefresh();
+                    return;
+            }
+        }
+        await ButtonPress.InvokeAsync(obj);
+        foreach (var h in ButtonPressHandlers)
+            await h.InvokeAsync(obj);
+    }
+
+    public async Task ConfirmRefresh()
+    {
+        var refreshResult = await Confirm.Show("Would you like to refresh?", "Refresh?", timeout: 60);
+        StateHasChanged();
+        if (await refreshResult.WaitForResult() == ConfirmationResult.Confirm)
+            await ReloadRequested.InvokeAsync();
+    }
+
+    public async Task ConfirmRestart()
+    {
+        var dialog = await Confirm.Show("Would you like to start over?", "Start Over?", timeout: 60);
+        StateHasChanged();
+
+        if (await dialog.WaitForResult() == ConfirmationResult.Confirm)
+        {
+            if (Navigation.ToBaseRelativePath(Navigation.Uri).Equals("/input", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await ReloadRequested.InvokeAsync();
+            }
+            else
+            {
+                Navigation.NavigateTo("/input");
+            }
+        }
+    }
+
+    public Confirm Confirm { get; set; } = null!;
+
+    public async ValueTask DisposeAsync()
+    {
+        ButtonPressHandlers.Clear();
+        handlerReceivers.Clear();
+        if (activityTimer != null)
+            await activityTimer.DisposeAsync();
+
+        if (jsModule != null)
+        {
+            await Js.InvokeVoidAsync("listener.detachAll");
+            await jsModule.DisposeAsync();
+            jsModule = null;
+        }
+
+        await Confirm.DisposeAsync();
+    }
+
+
+    private void ResetActivityTimeout()
+    {
+        activityTimer ??= new Timer(_ =>
+        {
+            Console.WriteLine("Showing timeout {0}", DateTime.Now);
+            InvokeAsync(async () =>
+            {
+                    var result = await Confirm.Show("Are you still there?", "Still There?", timeout: 60);
+                    StateHasChanged();
+                    if (await result.WaitForResult() is ConfirmationResult.Cancel or ConfirmationResult.Timeout
+                        or ConfirmationResult.None)
+                    {
+                        await ReloadRequested.InvokeAsync();
+                        return;
+                    }
+
+            });
+        }, null, Timeout.Infinite, Timeout.Infinite);
+        Console.WriteLine("Activity timer started {0}", DateTime.Now.Add(TimeSpan.FromMilliseconds(Options.ActivityTimeout)));
+        activityTimer.Change(Options.ActivityTimeout, Timeout.Infinite);
+        StateHasChanged();
+    }
+
+
+}

@@ -13,20 +13,20 @@ services:
       - "8080:8080"
     restart: unless-stopped
 
-  buttsgenerator:
-    image: sjc.vultrcr.com/infinitebutts/butts-generator
-    build:
-      context: ./ButtsBlazor.Generator
-      dockerfile: ./Dockerfile
-    volumes:
-      - ~/.cache:/home/user/.cache
-    ports:
-      - "7860:7860"
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+  # buttsgenerator:
+  #   image: sjc.vultrcr.com/infinitebutts/butts-generator
+  #   build:
+  #     context: ./ButtsBlazor.Generator
+  #     dockerfile: ./Dockerfile
+  #   volumes:
+  #     - ~/.cache:/home/user/.cache
+  #   ports:
+  #     - "7860:7860"
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]

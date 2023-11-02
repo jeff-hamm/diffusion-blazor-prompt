@@ -17,8 +17,10 @@ module.exports = {
         infiniteButts: path.join(__dirname, "Scripts/infinitebutts/index.ts"),
         input: path.join(__dirname, "Scripts/prompts/index.ts"),
         gradio: path.join(__dirname, "Scripts/prompts/gradio.ts"),
-        prompt: path.join(__dirname, "Scripts/prompts/prompt.ts"),
+        slots: path.join(__dirname, "Scripts/prompts/prompt.ts"),
         generate: path.join(__dirname, "Scripts/prompts/generate.ts"),
+        listener: path.join(__dirname, "Scripts/prompts/documentListener.ts"),
+        
     },
     devtool: 'source-map',
     output: {
@@ -26,11 +28,11 @@ module.exports = {
         chunkFilename: "js/[name].js?ver=[contenthash]",
         filename: "js/[name].js?ver=[contenthash]",
         publicPath: "/",
-        library: ["butts"],
-        libraryTarget: "window",
-    },
-    experiments: {
-        outputModule: false
+        library: {
+            name: '[name]',
+            type: 'window'
+        }
+
     },
     watchOptions: {
         ignored: ['**/*.cshtml'],

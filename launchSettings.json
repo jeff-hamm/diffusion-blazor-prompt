@@ -5,7 +5,7 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "buttsblazor": "StartDebugging",
-        "buttsgenerator": "StartDebugging"
+        "buttsgenerator": "None"
       }
     }
   }

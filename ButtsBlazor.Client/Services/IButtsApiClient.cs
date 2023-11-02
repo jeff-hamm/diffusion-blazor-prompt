@@ -6,7 +6,7 @@ namespace ButtsBlazor.Client.Services;
 
 public interface IButtsApiClient
 {
-    Task<UploadResult> UploadFile(string dataUrlString);
+    Task<UploadResult> UploadFile(string dataUrlString,string prompt, string inputImage, string code);
     Task<UploadResult> UploadFile(IBrowserFile file);
     Task<WebPath[]> GetRecentImages(int numImages);
 }

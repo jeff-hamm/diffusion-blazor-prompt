@@ -33,6 +33,7 @@ public class ImageGrid(Random random, int columns, int rows)
     {
         Clear();
         var extra = (Rows * Columns) - entities.Length;
+        int x = 0;
         return (extra switch
         {
             6 => PlaceImages(entities, 1, 3, 4),
@@ -68,8 +69,8 @@ public class ImageGrid(Random random, int columns, int rows)
             PlaceNext(hashSet, GridItemSize.OneByOne);
         }
 
-        for (var j = 0; j < Columns; j++)
-        for (var i = 0; i < Rows; i++)
+        for (var j = 0; j < Rows; j++)
+        for (var i = 0; i < Columns; i++)
         {
             if (grid[i, j].Entity != null)
             {

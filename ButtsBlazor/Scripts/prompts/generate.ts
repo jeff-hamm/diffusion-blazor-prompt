@@ -1,6 +1,5 @@
 ﻿import 'story-show-gallery/dist/ssg.min.css';
 import SSG from 'story-show-gallery/src/ssg.esm'
-export * from './documentListener';
 export * from './gradio';
 
 export function gallery() {

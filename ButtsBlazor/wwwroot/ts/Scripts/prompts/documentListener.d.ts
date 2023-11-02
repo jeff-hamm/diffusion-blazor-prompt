@@ -8,7 +8,7 @@ export declare class ComponentEventListener implements EventListenerObject {
     id(): any;
     attach(): void;
     detach(): void;
-    handleEvent(e: any): void;
+    handleEvent(e: any): Promise<void>;
 }
 export declare function detachAll(): void;
 export declare function addDocumentListener(componentRef: DotNet.DotNetObject, eventName: string, methodName: string): ComponentEventListener;

@@ -1,10 +1,11 @@
 ﻿@page "/input"
-@rendermode InteractiveWebAssembly
+@rendermode ButtsBlazor.Server.Components.NoPreRenderWebAssembly.Instance
 @using ButtsBlazor.Api.Model
 @using ButtsBlazor.Client.Services
 @using ButtsBlazor.Client.Utils
 @using ButtsBlazor.Shared.Services
 @implements IAsyncDisposable
+
 @inject IButtsApiClient ApiClient
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
@@ -13,23 +14,29 @@
 @inject PersistentComponentState ApplicationState
 
 <div class="page-intro">
-    <h1>Select a Butt!</h1>
+    <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
 </div>
 <section>
-    <CascadingValue Value="@random">
-        <Spinner IsVisible="@(images == null)"></Spinner>
-        <GridGallery Columns="@Columns" Zoom="true" Animate="false">
-            @if (images != null)
-            {
-                foreach (var img in @images)
+    <RootPageControls IsLoading="IsLoading" @ref="Page" ReloadRequested="Reload" >    </RootPageControls>
+
+        <CascadingValue Value="Page">
+
+        <CascadingValue Value="@random">
+            @*             <Confirm IsVisible="@ShowConfirm" Title="Are you still there?" Message="Are you still there?" ConfirmText="Yup" CancelText="Nope" TimedOut="TimeoutReload" Cancelled="TimeoutReload" Confirmed="ResetActivityTimeout" TimeoutSeconds="60"></Confirm>
+ *@
+            <IndexSelector SelectedIndexChanged="SetSelectedIndex" OnItemSelected="Select" MaxIndex="NumImages" RowSize="Columns" SelectedIndex="SelectedIndex"></IndexSelector>
+            <GridGallery Columns="@Columns" Zoom="true" Animate="false">
+                @if (images != null)
                 {
-                    if (img.Entity != null && img.Item != null)
+                    foreach (var img in @images)
                     {
-                        <GridGalleryItem OnClick="e => OnClick(e, img)" Href="@img.Entity.Value" LinkClass="notitle" Size="img.Item.Value" Selected="@(img.Entity == images[SelectedIndex].Entity)"></GridGalleryItem>
+                        if (img.Entity != null && img.Item != null)
+                        {
+                            <GridGalleryItem OnClick="e => OnClick(e, img)" Href="@img.Entity.Value" LinkClass="notitle" Size="img.Item.Value" Selected="@(img.Entity == images[SelectedIndex].Entity)"></GridGalleryItem>
+                        }
                     }
                 }
-            }
-        </GridGallery>
+            </GridGallery>
+        </CascadingValue>
     </CascadingValue>
 </section>
-

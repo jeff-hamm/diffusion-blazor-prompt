@@ -1,36 +1,45 @@
 ﻿@page "/prompt"
-@rendermode InteractiveWebAssembly
+@rendermode ButtsBlazor.Server.Components.NoPreRenderWebAssembly.Instance
 @using ButtsBlazor.Client.Services
 @using ButtsBlazor.Client.Utils
-@implements IAsyncDisposable
+@using ButtsBlazor.Client.Layout
+@using ButtsBlazor.Shared.ViewModels
+
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @inject PromptGenerationService PromptGeneration
 <div class="page-intro">
-    <h1>BUTTS!</h1>
+    <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
 </div>
-<section class="promptSlotSection">
-    @if (choices != null)
-    {
-        <div class="input-image-container"><img class="input-image" src="@Selection"></div>
-        <IndexSelector MaxIndex="@NumIndexes" RowSize="1" SelectedIndex="@SelectedIndex" SelectedIndexChanged="OnSelectedIndexChanged"></IndexSelector>
-        <div class="wheels">
-            @foreach (var option in choices)
-            {
-                <SlotWheel Options="option" Choice="@option.Choice" IsPreselected="option.Preselected" IsSelected="@(option.Part == selected?.Part)" ChoiceMade="ChoiceMade"></SlotWheel>
-            }
-        </div>
-    }
-</section>
 
+<RootPageControls @ref="@Page" IsLoading="IsLoading" ReloadRequested="Reload">    </RootPageControls>
+
+<CascadingValue Value="Page">
+    <section class="promptSlotSection">
+        @if (choices != null)
+        {
+            <div class="input-image-container"><img class="input-image" src="@Selection"></div>
+                <IndexSelector MaxIndex="@NumIndexes" RowSize="1" SelectedIndex="@SelectedIndex" SelectedIndexChanged="OnSelectedIndexChanged"></IndexSelector>
+                <div class="wheels">
+                    @foreach (var option in choices)
+                    {
+                        <SlotWheel Options="option" Choice="@option.Choice" IsPreselected="option.Preselected" IsSelected="@(option.Part == selected?.Part)" ChoiceMade="ChoiceMade"></SlotWheel>
+                    }
+                </div>
+        }
+    </section>
+</CascadingValue>
 
 @code {
     [Parameter, SupplyParameterFromQuery]
     public string? Selection { get; set; }
+    [Parameter, SupplyParameterFromQuery]
+    public string? Code { get; set; }
+    public RootPageControls Page { get; set; } = null!;
 
     private Task Select(string prompt)
     {
-        Navigation.NavigateTo($"/generate?image={Selection}&prompt={prompt.Replace("&nbsp;"," ")}");
+        Navigation.NavigateTo($"/generate?image={Selection}&prompt={prompt.Replace("&nbsp;"," ")}&code={Code}");
         return Task.CompletedTask;
     }
     public int SelectedIndex { get; set; }
@@ -38,7 +47,7 @@
     private PromptChoice[]? openChoices;
     private PromptChoice[]? choices;
     private PromptChoice? selected;
-    private IJSObjectReference? _promptModule;
+
 
     private void BuildOpenChoices()
     {
@@ -53,13 +62,22 @@
         selected = openChoices[SelectedIndex < openChoices.Length ? SelectedIndex : ^1];
     }
 
-    protected override Task OnParametersSetAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        await base.OnParametersSetAsync();
+        await Reload();
+    }
+
+    private Task Reload()
+    {
+        SelectedIndex = 0;
         var builder = PromptGeneration.GetPromptBuilder();
         choices = builder.Build();
         BuildOpenChoices();
-        return base.OnParametersSetAsync();
+        StateHasChanged();
+        return Task.CompletedTask;
     }
+
 
     private Task Next()
     {
@@ -85,29 +103,21 @@
             }
         }
         StateHasChanged();
-   
+
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+        return base.OnAfterRenderAsync(firstRender);
     }
 
     private Task ChoiceMade(string obj) => SelectWheel();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await base.OnAfterRenderAsync(firstRender);
-        if (firstRender)
-        {
-            _promptModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/prompt.js");
-        }
+    public bool IsLoading { get; set; }
 
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_promptModule != null)
-        {
-            await Js.InvokeVoidAsync("butts.detachAll");
-            await _promptModule.DisposeAsync();
-            _promptModule = null;
-        }
-    }
 
 }

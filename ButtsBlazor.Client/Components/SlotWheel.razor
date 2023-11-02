@@ -1,6 +1,10 @@
 ﻿@using ButtsBlazor.Client.Services
+@using ButtsBlazor.Shared.ViewModels
+@using ButtsBlazor.Client.Layout
 @inject IJSRuntime Js
 @implements IAsyncDisposable
+@implements IButtonPressListener
+
 @if (Options != null)
 {
     @if (!String.IsNullOrEmpty(Options.Prefix))
@@ -23,7 +27,6 @@
                 }
                 else
                 {
-                    <IndexSelector MaxIndex="1" Focus="false" OnItemSelected="Selected"></IndexSelector>
                     <div class="boxes boxes-length-@(Options.Choices.Length)" style="@ContainerStyle" @ref="boxesRef">
                         <div class="box slot-text" style="@BoxStyle">@((MarkupString)Options.Choices[^1])</div>
                         @foreach (var choice in Options.Choices)
@@ -43,6 +46,8 @@
 
 
 @code {
+    [CascadingParameter]
+    public RootPageControls? Page { get; set; }
 
     [Parameter]
     public PromptChoice? Options { get; set; }
@@ -65,43 +70,62 @@
     public int WheelWidth { get; set; } = 200;
     [Parameter]
     public string? Choice { get; set; }
-    protected override void OnParametersSet()
+
+    private PromptChoice? currentSpinnerOptions;
+    protected override async Task OnParametersSetAsync()
     {
-        base.OnParametersSet();
-        //        Options?.Choose(Options.Choices.Length > 0 ? Options.Choices[0] : "");
+        await base.OnParametersSetAsync();
+        if(Page != null)
+            Page.AddHandler(this, OnButtonPressed);
         Reset();
-        StateHasChanged();
-        Spin();
         StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
-        if (firstRender && Choice == null && Options != null)
+
+        if (firstRender || Options != currentSpinnerOptions || jsSpinner == null)
         {
-            NeedsSpin = false; 
-            _promptModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/prompt.js");
-            if (!boxesRef.HasValue) return;
-            jsSpinner = await Js.InvokeAsync<IJSObjectReference>("butts.spin", boxesRef.Value, Options.Choices);
-            this.NeedsSpin = false;
-            while (!isDisposed && Options.Choice == null && jsSpinner != null)
+            if (jsSpinner != null)
             {
-                var ix = await jsSpinner.InvokeAsync<int>("spin");
-                if (!isDisposed && IsSelected)
+                if (IsSpinning)
+                    await jsSpinner.InvokeAsync<int>("cancel");
+                await jsSpinner.DisposeAsync();
+                jsSpinner = null;
+            }
+            currentSpinnerOptions = null;
+            if (!boxesRef.HasValue) return;
+            if (_promptModule != null)
+                await _promptModule.DisposeAsync();
+            _promptModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/slots.js");
+            jsSpinner = await Js.InvokeAsync<IJSObjectReference>("slots.spin", boxesRef.Value);
+        }
+        if (NeedsSpin && (!IsSpinning || currentSpinnerOptions == null))
+        {
+            currentSpinnerOptions = Options;
+            NeedsSpin = false;
+            this.IsSpinning = true;
+            try
+            {
+                var ix = await jsSpinner.InvokeAsync<int>("spin",new object[]  {Options.Choices});
+                if (currentSpinnerOptions != null && Options == currentSpinnerOptions && IsSelected)
                 {
-                    Options.Choose(Options.Choices[ix]);
-                    await ChoiceMade.InvokeAsync(Options.Choices[ix]);
+                    currentSpinnerOptions.Choose(currentSpinnerOptions.Choices[ix]);
+                    await ChoiceMade.InvokeAsync(currentSpinnerOptions.Choices[ix]);
                     StateHasChanged();
                 }
+            }
+            finally
+            {
+                this.IsSpinning = false;
             }
         }
     }
     private bool NeedsSpin { get; set; }
     private void Reset()
     {
-        IsSpinning = false;
-        NeedsSpin = false;
+        NeedsSpin = Choice == null ;
         //        var choiceCount = Choice == null ? 0 :  Choice.Choices.Length - 1;
         //        AddUpdate(boxesStyleDict, "transform", $"translateY(-{WheelHeight * (choiceCount)}px)");
         //        AddUpdate(boxesStyleDict, "transitionDuration", "0s");
@@ -111,19 +135,6 @@
         ContainerStyle = ToStyle(boxesStyleDict);
     }
 
-    private void Spin()
-    {
-        if (!IsSpinning)
-        {
-            IsSpinning = true;
-            NeedsSpin = true;
-        }
-        //        if(IsSpinning)
-        //        AddUpdate(boxesStyleDict,"transform","translateY(0)");
-        //        AddUpdate(boxesStyleDict, "transitionDuration","4s");
-        BoxStyle = ToStyle(singleStyleDict);
-        ContainerStyle = ToStyle(boxesStyleDict);
-    }
 
     private void AddUpdate<TKey, TVal>(Dictionary<TKey, TVal> dict, TKey key, TVal val) where TKey:notnull
     {
@@ -140,22 +151,20 @@
 
     private string ContainerStyle { get; set; } = "";
 
-    private bool isDisposed = false;
     public async ValueTask DisposeAsync()
     {
-        isDisposed = true;
         if (jsSpinner != null)
         {
             await jsSpinner.InvokeAsync<int>("cancel");
             await jsSpinner.DisposeAsync();
             jsSpinner = null;
         }
-@*         if (_promptModule != null)
+         if (_promptModule != null)
         {
             await _promptModule.DisposeAsync();
             _promptModule = null;
         }
- *@    }
+     }
 
     private ElementReference? boxesRef;
     private IJSObjectReference? jsSpinner;
@@ -166,6 +175,19 @@
         if (jsSpinner != null && IsSelected)
         {
             await jsSpinner.InvokeAsync<int>("cancel");
+        }
+    }
+
+
+
+    public async Task OnButtonPressed(GamepadButton button)
+    {
+        switch (button)
+        {
+            case GamepadButton.Primary:
+            case GamepadButton.Select:
+                await Selected(0);
+                break;
         }
     }
 

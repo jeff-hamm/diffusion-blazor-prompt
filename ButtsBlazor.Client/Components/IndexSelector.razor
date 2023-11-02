@@ -1,10 +1,9 @@
-﻿@inject IJSRuntime Js
+﻿@using ButtsBlazor.Shared.ViewModels
+@using ButtsBlazor.Client.Layout
+@implements IButtonPressListener
+@implements IDisposable
 
-
-<div tabindex="@(Focus? "0" : "-1")" class="index-selector" @ref="fallbackDiv"></div>
 @code {
-//    [Parameter]
-//    public ElementReference? Container { get; set; }
     [Parameter]
     public bool Focus { get; set; } = true;
 
@@ -12,98 +11,65 @@
     public int RowSize { get; set; } = 4;
 
     [Parameter]
-    public string Module { get; set; } = "/js/prompt.js";
-    [Parameter]
     public int MaxIndex { get; set; } = 1;
-    private ElementReference fallbackDiv;
+
     [Parameter] public EventCallback<int> SelectedIndexChanged { get; set; }
     [Parameter] public EventCallback<int> OnItemSelected { get; set; }
     [Parameter]
     public int SelectedIndex { get; set; }
+    [CascadingParameter]
+    public RootPageControls? Page { get; set; }
 
-    private DotNetObjectReference<IndexSelector>? thisJsRef;
-    private IJSObjectReference? jsModule;
-    private IJSObjectReference? docListenerJsRef;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnInitializedAsync()
     {
-        await base.OnAfterRenderAsync(firstRender);
-        if (firstRender)
-        {
-            thisJsRef = DotNetObjectReference.Create(this);
-            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", Module);
-            docListenerJsRef = await Js.InvokeAsync<IJSObjectReference>("butts.addDocumentListener", thisJsRef, "keydown", nameof(KeyDown));
-        }
-        if (Focus)
-            await fallbackDiv.FocusAsync();
+        return base.OnInitializedAsync();
     }
 
-    private bool isDisposed = false;
-    public async ValueTask DisposeAsync()
+    protected override void OnParametersSet()
     {
-        isDisposed = true;
-        if (docListenerJsRef != null)
-        {
-            await docListenerJsRef.InvokeVoidAsync("detach");
-            await docListenerJsRef.DisposeAsync();
-            docListenerJsRef = null;
-        }
-        // if (jsModule != null)
-        // {
-        //     await jsModule.DisposeAsync();
-        //     jsModule = null;
-        // }
-        if (thisJsRef != null)
-        {
-            thisJsRef.Dispose();
-            thisJsRef = null;
-        }
+        base.OnParametersSet();
+        Page?.AddHandler(this, OnButtonPressed);
     }
 
-    [JSInvokable]
-    public async Task KeyDown(KeyboardEventArgs obj)
+    public async Task OnButtonPressed(GamepadButton obj)
     {
-        if (isDisposed)
+        Console.WriteLine("IndexSelector OnButtonPressed {0}", obj);
+        switch (obj)
         {
-            Console.WriteLine($"Unexpected keydown when disposed" + obj.Code);
-        }
-
-        switch (obj.Code)
-        {
-            case "Tab":
-                await SetSelectedIndex(SelectedIndex + (obj.ShiftKey ? -1 : 1));
-                break;
-            case "ArrowRight":
+            // case "Tab":
+            //     await SetSelectedIndex(SelectedIndex + (obj.ShiftKey ? -1 : 1));
+            //     break;
+            case GamepadButton.Right:
                 await SetSelectedIndex(SelectedIndex + 1);
                 break;
-
-            case "ArrowLeft":
+            case GamepadButton.Left:
                 await SetSelectedIndex(SelectedIndex - 1);
                 break;
-            case "ArrowUp":
+            case GamepadButton.Up:
                 await SetSelectedIndex(SelectedIndex - RowSize);
                 break;
-            case "ArrowDown":
+            case GamepadButton.Down:
                 await SetSelectedIndex(SelectedIndex + RowSize);
                 break;
-            case "Enter":
-            case "Space":
+            case GamepadButton.Primary:
+            case GamepadButton.Select:
                 await Select(SelectedIndex);
-                return;
-
+                break;
         }
     }
 
     private async Task Select(int selectedIndex)
     {
-        if (isDisposed) return;
+        Console.WriteLine("Select {0}", selectedIndex);
+
         await SetSelectedIndex(selectedIndex);
+        Console.WriteLine("Item selected: {0}",selectedIndex);
         await OnItemSelected.InvokeAsync(selectedIndex);
     }
 
     private async Task SetSelectedIndex(int newIndex)
     {
-        if (isDisposed) return;
+        Console.WriteLine("SetSelectedIndex {0}", newIndex);
         var previousIndex = SelectedIndex;
         SelectedIndex = newIndex;
         if (MaxIndex == 0)
@@ -112,8 +78,13 @@
             SelectedIndex %= MaxIndex;
         if (SelectedIndex < 0)
             SelectedIndex = MaxIndex + SelectedIndex;
-        if (SelectedIndex != previousIndex)
-            await SelectedIndexChanged.InvokeAsync(SelectedIndex);
+
+        Console.WriteLine("Selected index changed from {0} to {1}", previousIndex, SelectedIndex);
+        await SelectedIndexChanged.InvokeAsync(SelectedIndex);
+    }
+
+    public void Dispose()
+    {
     }
 
 }

@@ -63,7 +63,9 @@ namespace ButtsBlazor.Server.Controllers
         }
 
         [HttpPost("upload")]
-        public async Task<ActionResult<UploadResult>> PostFile([FromForm] IFormFile file, [FromForm]ImageType? imageType)
+        public async Task<ActionResult<UploadResult>> PostFile([FromForm] IFormFile file,
+            [FromForm] string? prompt, [FromForm] string? code, [FromForm] string? inputImage, [FromForm]ImageType? imageType
+        )
         {
             var uploadResult = new UploadResult();
             var untrustedFileName = file.FileName;
@@ -88,7 +90,10 @@ namespace ButtsBlazor.Server.Controllers
             {
                 try
                 {
-                    var saveFileResult = await fileService.SaveAndHashUploadedFile(file.FileName, imageType ?? ImageType.Output, file.OpenReadStream);
+                    var saveFileResult = await fileService.SaveAndHashUploadedFile(file.FileName, 
+                        imageType ?? ImageType.Output, file.OpenReadStream);
+                    if (prompt != null || code != null)
+                        await fileService.AttachImageMetadata(saveFileResult, prompt, code, inputImage);
                     uploadResult.Hash = saveFileResult.Base64Hash;
                     uploadResult.Path = saveFileResult.Path;
                     uploadResult.Uploaded = true;

@@ -35,7 +35,7 @@ public static class PromptConfig
 
 public class FakeButtsApiClient : IButtsApiClient
 {
-    public Task<UploadResult> UploadFile(string dataUrlString)
+    public Task<UploadResult> UploadFile(string dataUrlString, string prompt, string inputImage, string code)
     {
         return Task.FromResult<UploadResult>(new UploadResult());
     }

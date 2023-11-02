@@ -1,3 +1,4 @@
+using ButtsBlazor.Client;
 using ButtsBlazor.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Polly;
@@ -5,7 +6,9 @@ using Polly.Extensions.Http;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
-
+var root = builder.RootComponents.FirstOrDefault(c => c.ComponentType == typeof(Routes));
+builder.RootComponents.Remove(root);
+builder.RootComponents.Add<Routes>("#app");
 //builder.Services.AddTransient(s => new HttpClient()
 //{
 //    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)

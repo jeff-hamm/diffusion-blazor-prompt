@@ -21,4 +21,3 @@ $(document).ready(() => {
 })
 
 export * from './gradio';
-export * from './documentListener';

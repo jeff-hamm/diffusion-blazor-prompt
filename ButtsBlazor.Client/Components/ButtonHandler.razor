@@ -1,0 +1,105 @@
+﻿@using ButtsBlazor.Shared.ViewModels
+@using ButtsBlazor.Client.Layout
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+
+<div tabindex="@(Focus? "0" : "-1")" class="index-selector" @ref="fallbackDiv"></div>
+
+@code {
+
+    [Parameter]
+    public bool Focus { get; set; } = true;
+    [Parameter]
+    public EventCallback<GamepadButton> ButtonPress { get; set; }
+
+    private ElementReference fallbackDiv;
+    private DotNetObjectReference<ButtonHandler>? thisJsRef;
+    private IJSObjectReference? jsModule;
+    private IJSObjectReference? docListenerJsRef;
+
+    [JSInvokable]
+    public async Task KeyDown(KeyboardEventArgs obj)
+    {
+        if (isDisposed)
+        {
+            Console.WriteLine($"Unexpected keydown when disposed" + obj.Code);
+        }
+        if (!Enum.TryParse<GamepadButton>(obj.Code, true, out var button))
+        {
+            GamepadButton? buttonCode =
+                obj.Code.ToLower() switch 
+                {
+                    "tab" => GamepadButton.Select,
+                    "arrowright" => GamepadButton.Right,
+                    "keyd" => GamepadButton.Right,
+                    "arrowleft" => GamepadButton.Left,
+                    "keya" => GamepadButton.Left,
+                    "arrowup" => GamepadButton.Up,
+                    "keyw" => GamepadButton.Up,
+                    "arrowdown" => GamepadButton.Down,
+                    "keys" => GamepadButton.Down,
+                    "enter" => GamepadButton.Select,
+                    "space" =>  GamepadButton.Primary,
+                    "keye" => GamepadButton.Primary,
+                    "keyq" => GamepadButton.Secondary,
+                    "escape" => GamepadButton.Start,
+                    _ => null
+                    };
+                    
+            if (buttonCode == null)
+            {
+                Console.WriteLine("Got unknown keydown {0}", obj.Code);
+                return;
+            }
+            button = buttonCode.Value;
+        }
+
+        await ButtonPress.InvokeAsync(button);
+
+    }
+
+    public bool ShowConfirm { get; set; }
+
+    private void StartOver()
+    {
+        Navigation.NavigateTo("/input", true);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            thisJsRef = DotNetObjectReference.Create(this);
+            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js");
+            docListenerJsRef = await Js.InvokeAsync<IJSObjectReference>("listener.addDocumentListener", thisJsRef, "keydown", nameof(KeyDown));
+        }
+        if (Focus)
+            await fallbackDiv.FocusAsync();
+    }
+
+    private bool isDisposed = false;
+    public async ValueTask DisposeAsync()
+    {
+        isDisposed = true;
+        if (docListenerJsRef != null)
+        {
+            await docListenerJsRef.InvokeVoidAsync("detach");
+            await docListenerJsRef.DisposeAsync();
+            docListenerJsRef = null;
+        }
+        if (thisJsRef != null)
+        {
+            thisJsRef.Dispose();
+            thisJsRef = null;
+        }
+        if (jsModule != null)
+        {
+            await jsModule.DisposeAsync();
+            jsModule = null;
+        }
+
+    }
+
+}

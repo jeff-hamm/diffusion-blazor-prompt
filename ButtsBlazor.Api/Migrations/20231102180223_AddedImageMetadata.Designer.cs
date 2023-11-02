@@ -3,6 +3,7 @@ using System;
 using ButtsBlazor.Api.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ButtsBlazor.Api.Migrations
 {
     [DbContext(typeof(ButtsDbContext))]
-    partial class ButtsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231102180223_AddedImageMetadata")]
+    partial class AddedImageMetadata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0-rc.2.23480.1");

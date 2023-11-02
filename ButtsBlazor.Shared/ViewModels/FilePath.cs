@@ -21,7 +21,7 @@ public struct FilePath
         if (System.IO.Path.HasExtension(Path))
             path = System.IO.Path.GetDirectoryName(Path);
         if (!Directory.Exists(path))
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path) ??
+            Directory.CreateDirectory(path ??
                                       throw new InvalidOperationException($"Could not get directory name for {Path}"));
     }
 

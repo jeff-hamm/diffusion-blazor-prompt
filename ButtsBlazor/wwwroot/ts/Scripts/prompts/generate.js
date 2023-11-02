@@ -1,6 +1,5 @@
 import 'story-show-gallery/dist/ssg.min.css';
 import SSG from 'story-show-gallery/src/ssg.esm';
-export * from './documentListener';
 export * from './gradio';
 export function gallery() {
     SSG.jQueryImgSelector = "a[href$='.jpg'],a[href$='.jpeg'],a[href$='.JPG'],a[href$='.JPEG'],a[href$='.png'],a[href$='.PNG'],a[href$='.gif'],a[href$='.GIF'],a[href$='.webp'],a[href^='data']";

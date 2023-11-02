@@ -13,15 +13,23 @@ namespace ButtsBlazor.Client.Services;
 public class ButtsApiClient(IHttpClientFactory clientFactory, IOptions<PromptOptions> options) : IButtsApiClient
 {
 
-    public async Task<UploadResult> UploadFile(string dataUrlString)
+    public async Task<UploadResult> UploadFile(string dataUrlString, string prompt, string inputImage, string code)
     {
         var dataUrl = new DataUrl(dataUrlString);
         // Get content as string
         using var stream = new MemoryStream(
             Convert.FromBase64String(Encoding.ASCII.GetString(dataUrl.Content)));
         using var client = clientFactory.CreateClient(); 
-        return await UploadFile(client,stream , dataUrl.ContentType, 
-            Path.ChangeExtension(Path.GetRandomFileName(), "png"));
+        return await UploadFile(client, stream, dataUrl.ContentType, 
+            Path.ChangeExtension(Path.GetRandomFileName(), "png"),
+                new[]
+                {
+                    new KeyValuePair<string, string>("imageType", ImageType.Output.ToString()),
+                    new KeyValuePair<string, string>("code", code),
+                    new KeyValuePair<string, string>("prompt", prompt),
+                    new KeyValuePair<string, string>("inputImage", inputImage)
+                }
+            );
     }
     public async Task<UploadResult> UploadFile(IBrowserFile file)
     {
@@ -30,7 +38,7 @@ public class ButtsApiClient(IHttpClientFactory clientFactory, IOptions<PromptOpt
         return await UploadFile(client, stream, file.ContentType, file.Name);
     }
 
-    private static async Task<UploadResult> UploadFile(HttpClient client, Stream stream, string contentType, string name)
+    private static async Task<UploadResult> UploadFile(HttpClient client, Stream stream,string contentType, string name, IEnumerable<KeyValuePair<string,string>>? additionalFormData=null)
     {
         using var content = new MultipartFormDataContent();
         var fileContent = new StreamContent(stream);
@@ -41,7 +49,8 @@ public class ButtsApiClient(IHttpClientFactory clientFactory, IOptions<PromptOpt
             content: fileContent,
             name: "\"file\"",
             fileName: name);
-
+        if (additionalFormData != null)
+            content.Add(new FormUrlEncodedContent(additionalFormData));
 
         var response = await client.PostAsync("api/butts/upload", content);
         return await response.Content.ReadFromJsonAsync<UploadResult>() ??

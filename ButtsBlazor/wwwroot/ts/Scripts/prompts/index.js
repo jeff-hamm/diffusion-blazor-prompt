@@ -18,5 +18,4 @@ $(document).ready(() => {
     $('#SSG_menu').remove();
 });
 export * from './gradio';
-export * from './documentListener';
 //# sourceMappingURL=index.js.map

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Utils;
+using ButtsBlazor.Client.Services;
 using ButtsBlazor.Client.Utils;
 using ButtsBlazor.Services;
 using ButtsBlazor.Shared.ViewModels;
@@ -12,6 +13,7 @@ namespace ButtsBlazor.Api.Services;
 
 public class FileService(ImagePathService pathService, PromptOptions config, IDbContextFactory<ButtsDbContext> dbContextFactory, ILogger<FileService> logger)
 {
+    private readonly Random random = new Random();
     public async Task FileScan(ImageType? imageType = null)
     {
         ImageType[] imageTypes;
@@ -91,7 +93,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             await using var db = await dbContextFactory.CreateDbContextAsync();
             recentLock.AcquireReaderLock(LockTimeout);
             await RefreshRecent(db);
-            return recentList.Take(count).ToArray();
+            return random.RemoveNext(recentList.ToList(),count).ToArray();
         }
         finally
         {
@@ -118,7 +120,8 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             try
             {
                 imageCount = newCount ?? await db.Images.CountAsync();
-                recentList = await db.Images.Where(i => i.Type != ImageType.Output).OrderByDescending(i => i.RowId)
+                recentList = 
+                    await db.Images.Where(i => i.Type != ImageType.Output).OrderByDescending(i => i.RowId)
                     .Select(s => s.Path).Take(50).ToArrayAsync();
             }
             finally
@@ -199,5 +202,21 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         logger.LogDebug("Inserting image at {path} with type {imageType} and {id}",img.Path,img.Type, img.RowId);
         await dbContext.SaveChangesAsync();
         return img;
+    }
+
+    public async Task<ImageMetadata> AttachImageMetadata(ImageEntity saveFileResult, string? prompt, string? code, string? inputImage)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var metadata = new ImageMetadata()
+        {
+            Prompt = prompt,
+            Code = code,
+            InputImage = inputImage,
+            ImageEntityId = saveFileResult.RowId,
+            ImageEntity = saveFileResult
+        };
+        dbContext.Add(metadata);
+        await dbContext.SaveChangesAsync();
+        return metadata;
     }
 }

@@ -25,6 +25,7 @@
     "css-minimizer-webpack-plugin": "^5.0.1",
     "eslint": "^8.36.0",
     "file-loader": "^6.2.0",
+    "gamepad.js": "^2.1.0",
     "html-webpack-plugin": "^5.5.3",
     "https-browserify": "^1.0.0",
     "jquery": "^3.6.4",

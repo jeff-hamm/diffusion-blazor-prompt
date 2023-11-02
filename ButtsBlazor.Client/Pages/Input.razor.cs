@@ -1,9 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Client.Components;
+using ButtsBlazor.Client.Layout;
+using ButtsBlazor.Shared.Services;
+using ButtsBlazor.Shared.ViewModels;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Runtime.InteropServices;
 
 namespace ButtsBlazor.Client.Pages;
 
@@ -11,52 +15,59 @@ public partial class Input()
 {
     private PersistingComponentStateSubscription? persistingSubscription;
     private Random? random;
-    private DotNetObjectReference<Input>? thisJsRef;
-
-
     public int SelectedIndex { get; set; }
     private int? Seed { get; set; }
 
     [Parameter]
-    public int Columns { get; set; } = 4;
+    public int Columns { get; set; } = 6;
 
     [Parameter]
     public int Rows { get; set; } = 4;
 
     [Parameter]
-    public int NumImages { get; set; } = 10;
+    public int NumImages { get; set; } = 18;
+    public RootPageControls? Page { get; set; } = null!;
+
     GridSquare[]? images;
     private ImageGrid? grid;
-    private IJSObjectReference? jsModule;
 
     protected override async Task OnInitializedAsync()
     {
+        IsLoading = true;
+        StateHasChanged();
         persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
         RestorePersistedState();
         grid = new ImageGrid(random, Columns, Rows);
-        grid.Clear();
-        var entities = await ApiClient.GetRecentImages(NumImages);
-        if (entities?.Length > 0)
-            images = grid.Place(entities);
-        else
-        {
-            images = Array.Empty<GridSquare>();
-        }
 
-        await Notifications.SubscribeImage(this, OnNewImage);
+        // Don't block here?
+        Notifications.SubscribeImage(this, OnNewImage);
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        await Reload();
+    }
+    private async Task Reload()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        grid?.Clear();
+        var entities = await ApiClient.GetRecentImages(NumImages);
+        images = entities?.Length > 0 ? grid?.Place(entities) : Array.Empty<GridSquare>();
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    public bool IsLoading { get; set; } = true;
 
     private Task OnNewImage(ImageEntity imageEntity)
     {
         if(SelectedIndex == 0)
-            ReloadPage();
+            Navigation.Refresh();
         return Task.CompletedTask;
     }
 
-    private void ReloadPage(bool forceLoad=true)
-    {
-        Navigation.NavigateTo(Navigation.Uri, forceLoad);
-    }
 
 
     [MemberNotNull(nameof(random))]
@@ -71,6 +82,7 @@ public partial class Input()
 
     private async Task OnClick(MouseEventArgs obj, GridSquare clicked)
     {
+
         if (images?.Length > 0)
         {
             for (int i = 0; i < images.Length; i++)
@@ -94,47 +106,6 @@ public partial class Input()
         return Task.CompletedTask;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            thisJsRef = DotNetObjectReference.Create(this);
-            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/input.js");
-            docListenerJsRef = await Js.InvokeAsync<IJSObjectReference>("butts.addDocumentListener", thisJsRef, "keydown", nameof(KeyDown));
-        }
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    [JSInvokable]
-    public async Task KeyDown(KeyboardEventArgs obj)
-    {
-        switch (obj.Code)
-        {
-            case "Tab":
-                SetSelectedIndex(SelectedIndex + (obj.ShiftKey ? -1 : 1));
-                break;
-            case "ArrowRight":
-                SetSelectedIndex(SelectedIndex + 1 );
-                break;
-
-            case "ArrowLeft":
-                SetSelectedIndex(SelectedIndex - 1);
-                break;
-            case "ArrowUp":
-                SetSelectedIndex(SelectedIndex - Columns);
-                break;
-            case "ArrowDown":
-                SetSelectedIndex(SelectedIndex + Columns);
-                break;
-            case "Enter":
-            case "Space":
-                await Select(SelectedIndex);
-                StateHasChanged();
-                return;
-
-        }
-    }
-
     private void SetSelectedIndex(int newIndex)
     {
         var previousIndex = SelectedIndex;
@@ -143,48 +114,34 @@ public partial class Input()
         if (SelectedIndex < 0)
             SelectedIndex = (images?.Length ?? 0) + SelectedIndex;
         if (SelectedIndex != previousIndex)
+        {
+            Console.WriteLine("Input index changed from {0} to {1}", previousIndex, SelectedIndex);
             StateHasChanged();
-        ResetActivityTimeout();
+        }
     }
 
-    private Timer? activityTimer;
-    private IJSObjectReference? docListenerJsRef;
+    //private Task TimeoutReload()
+    //{
+    //    Console.WriteLine("Timeout expired", DateTime.Now);
+    //    Navigation.Refresh(true);
+    //    return Task.CompletedTask;
+    //}
 
-    private void ResetActivityTimeout()
-    {
-        activityTimer ??= new Timer(_ => ReloadPage(), null, Timeout.Infinite, Timeout.Infinite);
-        activityTimer.Change(Options.ActivityTimeout, Timeout.Infinite);
-    }
 
-    private async Task Select(int selectedIndex)
+    private Task Select(int selectedIndex)
     {
-        await DisposeAsync();
-        Navigation.NavigateTo("/prompt?Selection=" + images?[selectedIndex].Entity?.Path);
+//        await DisposeAsync();
+
+        Navigation.NavigateTo($"/prompt?Selection={images?[selectedIndex].Entity?.Path}&code={Seed.ToBase64String()[..^2]}");
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
     {
         if (persistingSubscription is { } sub)
             sub.Dispose();
-        if (activityTimer != null)
-            await activityTimer.DisposeAsync();
-        if (docListenerJsRef != null)
-        {
-            await docListenerJsRef.InvokeVoidAsync("detach");
-            await docListenerJsRef.DisposeAsync();
-            docListenerJsRef = null;
-        }
 
-        if (jsModule != null)
-        {
-            await jsModule.DisposeAsync();
-            jsModule = null;
-        }
-        if (thisJsRef != null)
-        {
-            thisJsRef.Dispose();
-            thisJsRef = null;
-        }
         Notifications.Dispose();
     }
+
 }

@@ -1,25 +1,16 @@
-export * from './documentListener';
 class SlotWheel {
     constructor(//component: DotNet.DotNetObject,
-    element, items) {
+    element) {
         this.itemHeight = 210;
-        this.itemTime = 300;
+        this.itemTime = 600;
         this.slowItemTime = 800;
         this.isSpinning = false;
         //        this.component = component;
         this.element = element;
-        this.items = items.length;
         this.index = 0;
-        this.maxHeight = this.itemHeight * this.items;
-        this.animations = [];
-        for (var i = 0; i < this.items; i++) {
-            this.animations.push(this.animation(i, this.itemTime + Math.random() * 300));
-            this.animations[0].persist();
-        }
     }
     //dispose() {
     //    this.component = null;
-    //}
     animation(ix, duration) {
         const from = (ix * this.itemHeight) - this.maxHeight;
         const effect = new KeyframeEffect(this.element, [
@@ -45,7 +36,17 @@ class SlotWheel {
         }
         return this.index;
     }
-    async spin() {
+    initItems(items) {
+        this.items = items.length;
+        this.maxHeight = this.itemHeight * this.items;
+        this.animations = [];
+        this.itemTime = 500 + Math.random() * 400;
+        for (var i = 0; i < this.items; i++) {
+            this.animations.push(this.animation(i, this.itemTime));
+            this.animations[0].persist();
+        }
+    }
+    async spin(items) {
         //    this.element.addEventListener("animationstart", e => this.onstart(e), false);
         //    this.element.addEventListener("animationend", e => this.onend(e), false);
         //    this.element.addEventListener("animationcancel", e => this.oncancel(e), false);
@@ -56,6 +57,7 @@ class SlotWheel {
             return -1;
         }
         this.isSpinning = true;
+        this.initItems(items);
         //        this.element.classList.add("spinning");
         console.log("spin");
         while (this.isSpinning) {
@@ -70,12 +72,15 @@ class SlotWheel {
         return (this.items - this.index) - 1;
     }
 }
-export function spin(element, items) {
+export function spin(element) {
     try {
-        return new SlotWheel(element, items);
+        if (!element.wheel) {
+            element.wheel = new SlotWheel(element);
+        }
+        return element.wheel;
     }
     catch (e) {
-        console.error("Error creating wheel", element, e, items);
+        console.error("Error creating wheel", element, e);
         return {
             spin: function () {
                 console.info("Dummy spin func", element, e);

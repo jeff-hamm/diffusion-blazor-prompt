@@ -5,19 +5,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/bootstrap.css?f64d1d4ec9be342c62ef"/>
+    <link rel="stylesheet" href="variables.css" />
+    <link rel="stylesheet" href="/css/bootstrap.css?f64d1d4ec9be342c62ef" />
     <link rel="stylesheet" href="/css/vendors.css?9743037eb5147b8b26f8"/>
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="ButtsBlazor.Server.styles.css" />
     <title>Infinite Butts</title>
-    <HeadOutlet @rendermode="@RenderMode.InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="@ButtsBlazor.Server.Components.NoPreRenderWebAssembly.Instance" />
     </head>
 
 <body>
-<div id="app">
-        <Routes @rendermode="@RenderMode.InteractiveWebAssembly" />
-    </div>
-<script src="_framework/blazor.web.js"></script>
+    <div id="app">Loading...</div>
+    <Routes @rendermode="@ButtsBlazor.Server.Components.NoPreRenderWebAssembly.Instance" />
+    <script src="_framework/blazor.webassembly.js"></script>
 
 <script src="/js/runtime.js?ver=b7ac93f6469e6740a92e"></script>
 

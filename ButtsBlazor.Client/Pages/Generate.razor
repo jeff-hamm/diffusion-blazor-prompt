@@ -1,8 +1,9 @@
 ﻿@page "/generate"
 @using ButtsBlazor.Client.Utils
 @using ButtsBlazor.Client.Services
+@using ButtsBlazor.Shared.Services
+@using ButtsBlazor.Shared.ViewModels
 @rendermode InteractiveWebAssembly
-@implements IAsyncDisposable
 @inject IButtsApiClient Client
 @inject NavigationManager Navigation
 @inject PromptOptions Options
@@ -16,27 +17,17 @@
         --linkActionIcon: "\ud83c\udf51";
     }
 </style>
+<div class="page-intro">
+    <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
+</div>
+
 <section>
-    @*     <Spinner IsVisible="LoaderVisible" Text="@GeneratingText">
-        <div class="input-image-container">
-            <img src="@Image" class="input-image" />
-        </div>
-    </Spinner>
- *@ 
-    <IndexSelector MaxIndex="@(imageSrc?.Length??1)" OnItemSelected="Next" Module="/js/generate.js"></IndexSelector>
+    <RootPageControls @ref="Page" ReloadRequested="Reload" ButtonPress="OnButtonPress" DefaultButtonHandlers="false"> </RootPageControls>
+    <CascadingValue Value="Page">
         <FullscreenImage Title="@Prompt" Image="@image" SrcImage="@Image">
         </FullscreenImage>
-@*         <div style="max-width: 800px; margin: auto;">
-            <div class="gridOverflow go-actionIcon ssg fs">
-                @foreach (var img in imageSrc)
-                {
-                    <a class="go_gridItem" href="@img" >
-                        <img src="@img" alt="@Prompt"/>
-                    </a>
-                }
-            </div>
-        </div>
- *@   
+    </CascadingValue>
+
 </section>
 
 @code {
@@ -59,8 +50,6 @@
         {
             NumOutputs = Options.NumGeneratedImages
         };
-        GeneratingText = $"Generating {Prompt}";
-        LoaderVisible = true;
     }
 
     private GeneratorPromptConfig? generatorConfig;
@@ -68,48 +57,83 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+            await Reload();
+    }
+    private async Task Reload()
+    {
+        if (IsGenerating) return;
+        IsGenerating = true;
+        GeneratingText = $"Generating {Prompt}";
+        StateHasChanged();
+        try
         {
-            LoaderVisible = true;
+            if (_promptModule != null)
+                await _promptModule.DisposeAsync();
+            _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
+            await JsRuntime.InvokeVoidAsync("generate.configure",
+                Options.GradioUri, null);
+            imageSrc = await JsRuntime.InvokeAsync<string[]>("generate.generate",
+                Image, Prompt, "", generatorConfig);
+            if (imageSrc.Length > 0)
+                image = imageSrc[0];
+        }
+        finally
+        {
+            IsGenerating = false;
             StateHasChanged();
-            try
-            {
-                _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
-                await JsRuntime.InvokeVoidAsync("butts.configure",
-                    Options.GradioUri, null);
-                   imageSrc = await JsRuntime.InvokeAsync<string[]>("butts.generate",
-                    Image, Prompt, "", generatorConfig);
-                if (imageSrc.Length > 0)
-                    image = imageSrc[0];
-            }
-            finally
-            {
-                LoaderVisible = false;
-                StateHasChanged();
-            }
-//            await JsRuntime.InvokeVoidAsync("butts.gallery");
         }
     }
-
-    public bool LoaderVisible { get; set; }
-
-    private async Task Next()
+    public bool IsGenerating { get; set; }
+    private async Task OnButtonPress(GamepadButton obj)
     {
+
+        if (IsGenerating)
+        {
+            if (Page != null)
+            {
+                if (obj == GamepadButton.Start)
+                    await Page.ConfirmRestart();
+                else if (obj == GamepadButton.Select)
+                    await Page.ConfirmRefresh();
+            }
+            return;
+        }
+        switch (obj)
+        {
+            case GamepadButton.Select:
+                // ToDo: add save image option
+                if(Page != null)
+                    await Page.ConfirmRefresh();
+                break;
+            case GamepadButton.Start:
+            case GamepadButton.Primary:
+                await ConfirmNext();
+                break;
+        }
+
+
+    }
+
+    Random random = new Random();
+    private async Task ConfirmNext()
+    {
+        if (Page == null) return;
         if (imageSrc?.Length > 0)
         {
-            await Client.UploadFile(imageSrc[0]);
+            var code = random.Next().ToBase64StringNoPadding();
+            var dialog = await Page.Confirm.Show($"This image will be displayed next! Would you like to save this image before restarting? You can recover it later with the code {code}.", "Save Image?", "Delete", "Save", timeout: 60);
+            var r = await dialog.WaitForResult();
+            if (r is ConfirmationResult.Cancel)
+            {
+                await Client.UploadFile(imageSrc[0],Prompt!,image!,code);
+            }
         }
         Navigation.NavigateTo("/input");
     }
 
-    public async ValueTask DisposeAsync()
-    {
-//        await JsRuntime.InvokeVoidAsync("butts.closeGallery");
-        if (_promptModule != null)
-        {
-            await JsRuntime.InvokeVoidAsync("butts.detachAll");
-            await _promptModule.DisposeAsync();
-            _promptModule = null;
-        }
-    }
+
+    public RootPageControls? Page { get; set; }
+
+
 
 }

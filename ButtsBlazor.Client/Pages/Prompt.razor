@@ -8,22 +8,24 @@
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @inject PromptGenerationService PromptGeneration
+<script src="/js/slots.js?ver=1"></script>
+
 <div class="page-intro">
     <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
 </div>
 
-<RootPageControls @ref="@Page" IsLoading="IsLoading" ReloadRequested="Reload">    </RootPageControls>
+<RootPageControls @ref="@Page" IsLoading="IsLoading" ReloadRequested="Reload" NavigateBack="NavigateBack">    </RootPageControls>
 
 <CascadingValue Value="Page">
     <section class="promptSlotSection">
         @if (choices != null)
         {
-            <div class="input-image-container"><img class="input-image" src="@Selection"></div>
+            <div class="input-image-container"><img class="input-image" src="@Image"></div>
                 <IndexSelector MaxIndex="@NumIndexes" RowSize="1" SelectedIndex="@SelectedIndex" SelectedIndexChanged="OnSelectedIndexChanged"></IndexSelector>
                 <div class="wheels">
                     @foreach (var option in choices)
                     {
-                        <SlotWheel Options="option" Choice="@option.Choice" IsPreselected="option.Preselected" IsSelected="@(option.Part == selected?.Part)" ChoiceMade="ChoiceMade"></SlotWheel>
+                        <SlotWheel Clicked="OnWheelClick" Options="option" Choice="@option.Choice" IsPreselected="option.Preselected" IsSelected="@(option.Part == selected?.Part)" ChoiceMade="ChoiceMade"></SlotWheel>
                     }
                 </div>
         }
@@ -32,14 +34,14 @@
 
 @code {
     [Parameter, SupplyParameterFromQuery]
-    public string? Selection { get; set; }
+    public string? Image { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Code { get; set; }
     public RootPageControls Page { get; set; } = null!;
 
     private Task Select(string prompt)
     {
-        Navigation.NavigateTo($"/generate?image={Selection}&prompt={prompt.Replace("&nbsp;"," ")}&code={Code}");
+        Navigation.NavigateTo($"/generate?image={Image}&prompt={prompt.Replace("&nbsp;"," ")}&code={Code}");
         return Task.CompletedTask;
     }
     public int SelectedIndex { get; set; }
@@ -84,6 +86,20 @@
         if (choices == null) return Task.CompletedTask;
         return Select(choices.ToPromptString());
     }
+    private Task OnWheelClick(SlotWheel arg)
+    {
+        if (choices == null) return Task.CompletedTask;
+        for (int i = 0; i < choices.Length; i++)
+        {
+            if (choices[i] == arg.Options)
+            {
+                OnSelectedIndexChanged(i);
+                break;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
     private void OnSelectedIndexChanged(int ix)
     {
         SelectedIndex = ix;
@@ -119,5 +135,10 @@
 
     public bool IsLoading { get; set; }
 
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/input");
+    }
 
 }

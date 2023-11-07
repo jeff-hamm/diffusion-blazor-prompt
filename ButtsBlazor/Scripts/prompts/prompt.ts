@@ -37,6 +37,14 @@ class SlotWheel {
     }
     isSpinning: boolean;
     currentAnimation: Animation;
+    async dispose() {
+        this.isSpinning = false;
+        if (this.currentAnimation)
+            this.currentAnimation.cancel();
+        for (var i = 0; i < this.animations.length; i++) 
+            this.animations[i].cancel();
+        (<any>this.element).wheel = null;            
+    }
     async cancel() {
         this.isSpinning = false;
 //        this.element.classList.add("cancelling");
@@ -53,7 +61,8 @@ class SlotWheel {
         this.items = items.length;
         this.maxHeight = this.itemHeight * this.items;
         this.animations = [];
-        this.itemTime = 500 + Math.random() * 400
+        this.itemTime = 750;
+//        this.itemTime = 600 + Math.random() * 300
         for (var i = 0; i < this.items; i++) {
             this.animations.push(this.animation(i, this.itemTime));
             this.animations[0].persist();
@@ -78,7 +87,8 @@ class SlotWheel {
         while (this.isSpinning) {
             var animation = this.animation(this.index, this.itemTime);
             await animation.ready;
-            animation.play();
+            if(this.isSpinning)
+                animation.play();
             await animation.finished;
             this.index = (this.index + 1) % this.items;
         }
@@ -103,23 +113,31 @@ class SlotWheel {
     //}
 
 }
+function dummyWheel(element) {
+    return {
+        spin: function () {
+            console.info("Dummy spin func", element);
+        },
+        dispose: function () {
+            console.info("Dummy dispose func", element);
+        },
+        cancel: function () {
+            console.info("Dummy cancel func", element);
+        }
+    }
+}
 
 export function spin(element: HTMLElement) {
     try {
+        if (!element)
+            return dummyWheel(element);
         if (!(<any>element).wheel) {
             (<any>element).wheel = new SlotWheel(element);
         }
         return (<any>element).wheel;
     }
     catch (e) {
-        console.error("Error creating wheel", element, e);
-        return {
-            spin: function () {
-                console.info("Dummy spin func", element,e);
-            },
-            cancel: function () {
-                console.info("Dummy cancel func", element, e);
-            }
-        }
+        console.error("Error creating wheel", element);
+        return dummyWheel(element);
     }
 }

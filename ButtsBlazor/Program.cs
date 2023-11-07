@@ -26,7 +26,7 @@ builder.Configuration.AddEFCoreConfiguration<ButtsDbContext>(options =>
 }, reloadOnChange: true, onLoadException: ex => ex.Ignore = true);
 builder.Services.AddControllers();
 builder.Services.AddRazorPages()
-//    .AddRazorRuntimeCompilation()
+    .AddRazorRuntimeCompilation()
     ;
 //builder.Services.AddHttpClient("").ConfigureHttpClient((sp,c) =>
 //{

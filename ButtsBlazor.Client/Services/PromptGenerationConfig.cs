@@ -19,6 +19,7 @@ public static class PromptGenerationConfig
         @this.AddTransient<IButtsNotificationClient, ButtsNotificationClient>();
         @this.AddScoped<Random>();
         @this.AddScoped<PromptGenerationService>();
+        @this.AddSingleton<History>();
         @this.AddScoped<IButtsApiClient, ButtsApiClient>();
 
         return @this;

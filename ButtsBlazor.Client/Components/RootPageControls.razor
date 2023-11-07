@@ -1,8 +1,10 @@
 ﻿@using ButtsBlazor.Shared.ViewModels
 @using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Client.Services
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @inject PromptOptions Options
+@inject History History
 @implements IAsyncDisposable
 
 <ButtonHandler ButtonPress="OnButtonPress"></ButtonHandler>
@@ -51,8 +53,7 @@
         {
             if (IsLoading)
             {
-                jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js");
-
+                jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js?ver=5");
                 IsLoading = false;
                 //                StateHasChanged();
             }
@@ -78,12 +79,28 @@
                     return;
                 case GamepadButton.Select:
                     await ConfirmRefresh();
+                    return;     
+                case GamepadButton.LShoulder:
+                    await ConfirmBack();
+                    return;
+                case GamepadButton.RShoulder:
+                    Navigation.Refresh(true);                    
                     return;
             }
         }
         await ButtonPress.InvokeAsync(obj);
         foreach (var h in ButtonPressHandlers)
             await h.InvokeAsync(obj);
+    }
+
+    [Parameter]
+    public EventCallback NavigateBack { get; set; }
+    private async Task ConfirmBack()
+    {
+        var refreshResult = await Confirm.Show("Would you like to go back?", "Back?", timeout: 60);
+        StateHasChanged();
+        if (await refreshResult.WaitForResult() == ConfirmationResult.Confirm)
+            await NavigateBack.InvokeAsync();
     }
 
     public async Task ConfirmRefresh()
@@ -144,7 +161,7 @@
                     if (await result.WaitForResult() is ConfirmationResult.Cancel or ConfirmationResult.Timeout
                         or ConfirmationResult.None)
                     {
-                        await ReloadRequested.InvokeAsync();
+                        Navigation.NavigateTo("/input");
                         return;
                     }
 

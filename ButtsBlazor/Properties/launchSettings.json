@@ -3,15 +3,15 @@
     "http": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5023/input",
+      "launchUrl": "http://localhost:5023/ipad",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5023",
+        "ASPNETCORE_URLS": "http://localhost:5023"
         //"DOTNET_MODIFIABLE_ASSEMBLIES": "Debug"
       },
       "dotnetRunMessages": true,
-      "inspectUri": "{wsProtocol}://localhost:5023/_framework/debug/ws-proxy?browser={browserInspectUri}"
-      //"applicationUrl": "http://127.0.0.1:5023"
+      "inspectUri": "{wsProtocol}://localhost:5023/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "http://localhost:5023"
     },
     "Docker": {
       "commandName": "Docker",

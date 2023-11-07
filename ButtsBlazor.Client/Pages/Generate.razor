@@ -17,12 +17,14 @@
         --linkActionIcon: "\ud83c\udf51";
     }
 </style>
+<script src="/js/generate.js?ver=1"></script>
+
 <div class="page-intro">
     <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
 </div>
 
-<section>
-    <RootPageControls @ref="Page" ReloadRequested="Reload" ButtonPress="OnButtonPress" DefaultButtonHandlers="false"> </RootPageControls>
+<section @onclick="OnClick">
+    <RootPageControls @ref="Page" ReloadRequested="Reload" NavigateBack="NavigateBack" ButtonPress="OnButtonPress" DefaultButtonHandlers="@(!HasGenerated)"> </RootPageControls>
     <CascadingValue Value="Page">
         <FullscreenImage Title="@Prompt" Image="@image" SrcImage="@Image">
         </FullscreenImage>
@@ -31,11 +33,17 @@
 </section>
 
 @code {
-
+    public bool HasGenerated { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Image { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Prompt { get; set; }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/prompt?image=" + Image);
+    }
+
 
     private string GeneratingText { get; set; } = "";
 
@@ -62,6 +70,7 @@
     private async Task Reload()
     {
         if (IsGenerating) return;
+        HasGenerated = false;
         IsGenerating = true;
         GeneratingText = $"Generating {Prompt}";
         StateHasChanged();
@@ -74,6 +83,7 @@
                 Options.GradioUri, null);
             imageSrc = await JsRuntime.InvokeAsync<string[]>("generate.generate",
                 Image, Prompt, "", generatorConfig);
+            HasGenerated = true;
             if (imageSrc.Length > 0)
                 image = imageSrc[0];
         }
@@ -87,23 +97,11 @@
     private async Task OnButtonPress(GamepadButton obj)
     {
 
-        if (IsGenerating)
-        {
-            if (Page != null)
-            {
-                if (obj == GamepadButton.Start)
-                    await Page.ConfirmRestart();
-                else if (obj == GamepadButton.Select)
-                    await Page.ConfirmRefresh();
-            }
-            return;
-        }
         switch (obj)
         {
             case GamepadButton.Select:
-                // ToDo: add save image option
-                if(Page != null)
-                    await Page.ConfirmRefresh();
+                await PromptSave("Reloading");
+                await Reload();
                 break;
             case GamepadButton.Start:
             case GamepadButton.Primary:
@@ -118,22 +116,36 @@
     private async Task ConfirmNext()
     {
         if (Page == null) return;
+        await PromptSave("Restarting");
+        Navigation.NavigateTo("/input");
+    }
+
+    private async Task PromptSave(string title)
+    {
         if (imageSrc?.Length > 0)
         {
             var code = random.Next().ToBase64StringNoPadding();
-            var dialog = await Page.Confirm.Show($"This image will be displayed next! Would you like to save this image before restarting? You can recover it later with the code {code}.", "Save Image?", "Delete", "Save", timeout: 60);
+            var dialog = await Page.Confirm.Show(
+                $"This image will be displayed next! Would you like to save this image before restarting? You can recover it later with the code <span class='save-code'>{code}</span>.",
+                title + " - Save Image?", "Delete", "Save", timeout: 60);
             var r = await dialog.WaitForResult();
             if (r is ConfirmationResult.Cancel)
             {
-                await Client.UploadFile(imageSrc[0],Prompt!,image!,code);
+                await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
             }
         }
-        Navigation.NavigateTo("/input");
     }
 
 
     public RootPageControls? Page { get; set; }
 
+
+    private async Task OnClick()
+    {
+        if (IsGenerating)
+            return;
+        await ConfirmNext();
+    }
 
 
 }

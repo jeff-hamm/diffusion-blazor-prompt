@@ -19,7 +19,7 @@
         }
         else
         {
-            <div class="wheel @(IsSelected ? "selected" : "") @(Choice != null ? "chosen" : "")">
+            <div class="wheel @(IsSelected ? "selected" : "") @(Choice != null ? "chosen" : "")" @onclick="OnClicked">
                 <div class="overlay"></div>
                 @if (Choice != null)
                 {
@@ -48,7 +48,8 @@
 @code {
     [CascadingParameter]
     public RootPageControls? Page { get; set; }
-
+    [Parameter]
+    public EventCallback<SlotWheel> Clicked { get; set; }
     [Parameter]
     public PromptChoice? Options { get; set; }
 
@@ -90,7 +91,10 @@
             if (jsSpinner != null)
             {
                 if (IsSpinning)
-                    await jsSpinner.InvokeAsync<int>("cancel");
+                {
+                    await jsSpinner.InvokeVoidAsync("dispose");
+                    IsSpinning = false;
+                }
                 await jsSpinner.DisposeAsync();
                 jsSpinner = null;
             }
@@ -108,12 +112,20 @@
             this.IsSpinning = true;
             try
             {
+                var spinning = Options;
                 var ix = await jsSpinner.InvokeAsync<int>("spin",new object[]  {Options.Choices});
-                if (currentSpinnerOptions != null && Options == currentSpinnerOptions && IsSelected)
+                if (!isDisposed && currentSpinnerOptions != null && Options == spinning && IsSelected)
                 {
-                    currentSpinnerOptions.Choose(currentSpinnerOptions.Choices[ix]);
-                    await ChoiceMade.InvokeAsync(currentSpinnerOptions.Choices[ix]);
-                    StateHasChanged();
+                    if (spinning.Choices.Length > 0)
+                    {
+                        if (ix < 0)
+                            ix = 0;
+                        if (ix >= spinning.Choices.Length)
+                            ix = spinning.Choices.Length - 1;
+                        spinning.Choose(spinning.Choices[ix]);
+                        await ChoiceMade.InvokeAsync(spinning.Choices[ix]);
+                        StateHasChanged();
+                    }
                 }
             }
             finally
@@ -151,11 +163,13 @@
 
     private string ContainerStyle { get; set; } = "";
 
+    private bool isDisposed = false;
     public async ValueTask DisposeAsync()
     {
+        isDisposed = true;
         if (jsSpinner != null)
         {
-            await jsSpinner.InvokeAsync<int>("cancel");
+            await jsSpinner.InvokeVoidAsync("dispose");
             await jsSpinner.DisposeAsync();
             jsSpinner = null;
         }
@@ -174,7 +188,7 @@
     {
         if (jsSpinner != null && IsSelected)
         {
-            await jsSpinner.InvokeAsync<int>("cancel");
+            await jsSpinner.InvokeVoidAsync("cancel");
         }
     }
 
@@ -189,6 +203,16 @@
                 await Selected(0);
                 break;
         }
+    }
+
+    private async Task OnClicked()
+    {
+        if (IsSelected)
+        {
+            await Selected(0);
+        }
+        else
+            await Clicked.InvokeAsync(this);
     }
 
 }

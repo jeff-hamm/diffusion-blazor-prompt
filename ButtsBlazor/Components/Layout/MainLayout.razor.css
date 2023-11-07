@@ -82,6 +82,7 @@ main > * {
     }
 
     .top-row, article {
+        max-height: 100vh;
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }

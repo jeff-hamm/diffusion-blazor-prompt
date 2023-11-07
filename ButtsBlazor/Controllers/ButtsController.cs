@@ -44,8 +44,8 @@ namespace ButtsBlazor.Server.Controllers
         public PromptOptions GetOptions() => options.Value;
 
         [HttpGet("recent")]
-        public async Task<WebPath[]> Get(int count) =>
-            await fileService.GetLatestUploads(count);
+        public IAsyncEnumerable<WebPath> Get(int count) =>
+            fileService.GetLatestUploads(count);
 
         [HttpGet("exists")]
         public string? Get(string imageHash)

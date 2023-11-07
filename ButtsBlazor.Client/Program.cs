@@ -5,7 +5,11 @@ using Polly;
 using Polly.Extensions.Http;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+#if DEBUG
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
+#else
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+#endif
 var root = builder.RootComponents.FirstOrDefault(c => c.ComponentType == typeof(Routes));
 builder.RootComponents.Remove(root);
 builder.RootComponents.Add<Routes>("#app");

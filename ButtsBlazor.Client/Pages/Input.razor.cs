@@ -30,9 +30,14 @@ public partial class Input()
 
     GridSquare[]? images;
     private ImageGrid? grid;
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/input");
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        History.ClearHistory();
         IsLoading = true;
         StateHasChanged();
         persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
@@ -40,7 +45,7 @@ public partial class Input()
         grid = new ImageGrid(random, Columns, Rows);
 
         // Don't block here?
-        Notifications.SubscribeImage(this, OnNewImage);
+        await Notifications.SubscribeImage(this, OnNewImage);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -132,7 +137,7 @@ public partial class Input()
     {
 //        await DisposeAsync();
 
-        Navigation.NavigateTo($"/prompt?Selection={images?[selectedIndex].Entity?.Path}&code={Seed.ToBase64String()[..^2]}");
+        Navigation.NavigateTo($"/prompt?image={images?[selectedIndex].Entity?.Path}&code={Seed.ToBase64String()[..^2]}");
         return Task.CompletedTask;
     }
 

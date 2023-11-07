@@ -20,7 +20,7 @@ public class PromptOptions
     public GenerationOptions GenerationOptions { get; set; } = new();
     public LogLevel LogLevel { get; set; } = LogLevel.Debug;
     public string NotifyHubPath { get; set; } = "/notify";
-    public int ActivityTimeout { get; set; } = 10 * 1000;
+    public int ActivityTimeout { get; set; } = 5 * 60 * 1000;
     public int NumChoices { get; set; } = 4;
     public int NumItemsPerChoice { get; set; } = 6;
     public int NumGeneratedImages { get; set; } = 1;

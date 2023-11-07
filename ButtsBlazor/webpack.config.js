@@ -18,6 +18,7 @@ module.exports = {
         input: path.join(__dirname, "Scripts/prompts/index.ts"),
         gradio: path.join(__dirname, "Scripts/prompts/gradio.ts"),
         slots: path.join(__dirname, "Scripts/prompts/prompt.ts"),
+        ipad: path.join(__dirname, "Scripts/prompts/ipad.ts"),
         generate: path.join(__dirname, "Scripts/prompts/generate.ts"),
         listener: path.join(__dirname, "Scripts/prompts/documentListener.ts"),
         
@@ -117,6 +118,13 @@ module.exports = {
     },
     module: {
         rules: [
+            {
+                test: require.resolve("jquery"),
+                loader: "expose-loader",
+                options: {
+                  exposes: ["$", "jQuery"],
+                },
+              },
             { test: /\.cshtml$/, use: 'ignore-loader' },
             {
                 test: /\.ts$/,

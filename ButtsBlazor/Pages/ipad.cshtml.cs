@@ -27,9 +27,13 @@ namespace ButtsBlazor.Server.Pages
             this.hub = hub;
         }
 
-        public async Task OnPost([FromForm] IFormFile? file)
+        public ActionResult OnGet()
         {
-            if (file == null) return;
+            return Page();
+        }
+        public async Task<ActionResult> OnPost([FromForm] IFormFile? file)
+        {
+            if (file == null) return Page();
             var it = ImageType.Camera;
             var uploadResult = new UploadResult();
             var untrustedFileName = file.FileName;
@@ -69,6 +73,7 @@ namespace ButtsBlazor.Server.Pages
 
             }
 
+            return Page();
         }
     }
 }

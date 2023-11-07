@@ -83,9 +83,10 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
     private readonly ReaderWriterLock recentLock = new ReaderWriterLock();
     private const int LockTimeout = 1000;
     private WebPath[]? recentList;
+    private WebPath[]? randomList;
     private int imageCount;
 
-    public async Task<WebPath[]> GetLatestUploads(int count)
+    public async IAsyncEnumerable<WebPath> GetLatestUploads(int count)
     {
 
         try
@@ -93,7 +94,28 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             await using var db = await dbContextFactory.CreateDbContextAsync();
             recentLock.AcquireReaderLock(LockTimeout);
             await RefreshRecent(db);
-            return random.RemoveNext(recentList.ToList(),count).ToArray();
+            var randomCount = count switch
+            {
+                >= 12 => 4,
+                >= 8 => 2,
+                _ => 0
+            };
+            var remaining = count - randomCount;
+            foreach (var cameraImage in recentList)
+            {
+                yield return cameraImage;
+                remaining--;
+                if (remaining <= 0)
+                    break;
+
+            }
+
+            remaining += randomCount;
+            while (remaining > 0 && randomList?.Length > 0)
+            {
+                yield return random.NextRequired(randomList);
+                remaining--;
+            }
         }
         finally
         {
@@ -119,9 +141,12 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
                 recentLock.AcquireWriterLock(LockTimeout);
             try
             {
-                imageCount = newCount ?? await db.Images.CountAsync();
-                recentList = 
-                    await db.Images.Where(i => i.Type != ImageType.Output).OrderByDescending(i => i.RowId)
+                imageCount = newCount ?? await db.Images.Where(i => i.Type == ImageType.Camera).CountAsync();
+                recentList = await db.Images.Where(i => i.Type == ImageType.Camera)
+                    .OrderByDescending(i => i.RowId)
+                    .Take(20).Select(s => s.Path).ToArrayAsync();
+                randomList = 
+                    await db.Images.Where(i => i.Type != ImageType.Output && i.Type != ImageType.Camera).OrderByDescending(i => i.RowId)
                     .Select(s => s.Path).Take(50).ToArrayAsync();
             }
             finally

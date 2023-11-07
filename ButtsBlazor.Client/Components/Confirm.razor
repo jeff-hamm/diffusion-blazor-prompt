@@ -15,7 +15,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                @Message
+                @((MarkupString?)Message)
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary @(SelectedButton == 0 ? "selected" : "")" data-bs-dismiss="modal"

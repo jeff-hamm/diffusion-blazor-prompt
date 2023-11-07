@@ -13,19 +13,17 @@
     <meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path)" />
 </head>
 <body>
-<div class="container">
-    <main role="main" class="pb-3">
+    <div class="page" id="app">
         @RenderBody()
-    </main>
-</div>
+    </div>
 
-    <script src="/js/runtime.js?ver=b7ac93f6469e6740a92e"></script>
+    <script src="/js/runtime.js?ver=5"></script>
 
-    <script src="/js/jquery.js?ver=90fea367eabd675a2943"></script>
+    <script src="/js/jquery.js?ver=5"></script>
 
-    <script src="/js/bootstrap.js?ver=d60e4331c49468a03dc8"></script>
+    <script src="/js/bootstrap.js?ver=5"></script>
 
-    <script src="/js/vendors.js?ver=3ca6d410eb70b0bb4fb9"></script>
+    <script src="/js/vendors.js?ver=5"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
 </body>

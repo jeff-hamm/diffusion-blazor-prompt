@@ -31,35 +31,23 @@
     <Compile Remove="sampleSdXl\**" />
     <Compile Remove="Scripts\prompts\node_modules\**" />
     <Compile Remove="wwwroot\butts_images\**" />
-    <Compile Remove="wwwroot\css\**" />
-    <Compile Remove="wwwroot\js\**" />
     <Compile Remove="wwwroot\ts\**" />
     <Compile Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
-    <Compile Remove="wwwroot\worker\**" />
     <Content Remove="sampleSdXl\**" />
     <Content Remove="Scripts\prompts\node_modules\**" />
     <Content Remove="wwwroot\butts_images\**" />
-    <Content Remove="wwwroot\css\**" />
-    <Content Remove="wwwroot\js\**" />
     <Content Remove="wwwroot\ts\**" />
     <Content Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
-    <Content Remove="wwwroot\worker\**" />
     <EmbeddedResource Remove="sampleSdXl\**" />
     <EmbeddedResource Remove="Scripts\prompts\node_modules\**" />
     <EmbeddedResource Remove="wwwroot\butts_images\**" />
-    <EmbeddedResource Remove="wwwroot\css\**" />
-    <EmbeddedResource Remove="wwwroot\js\**" />
     <EmbeddedResource Remove="wwwroot\ts\**" />
     <EmbeddedResource Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
-    <EmbeddedResource Remove="wwwroot\worker\**" />
     <None Remove="sampleSdXl\**" />
     <None Remove="Scripts\prompts\node_modules\**" />
     <None Remove="wwwroot\butts_images\**" />
-    <None Remove="wwwroot\css\**" />
-    <None Remove="wwwroot\js\**" />
     <None Remove="wwwroot\ts\**" />
     <None Remove="wwwroot\ts\Scripts\prompts\%40gradio\**" />
-    <None Remove="wwwroot\worker\**" />
   </ItemGroup>
 
 
@@ -76,6 +64,38 @@
     <None Include="tsconfig.json" />
     <None Include="Worker\package.json" />
     <None Include="Worker\tsconfig.json" />
+    <None Include="wwwroot\css\bootstrap.css.map" />
+    <None Include="wwwroot\css\infiniteButts.css.map" />
+    <None Include="wwwroot\css\vendors.css.map" />
+    <None Include="wwwroot\js\764.js" />
+    <None Include="wwwroot\js\764.js.map" />
+    <None Include="wwwroot\js\884.js" />
+    <None Include="wwwroot\js\884.js.map" />
+    <None Include="wwwroot\js\bootstrap.js" />
+    <None Include="wwwroot\js\bootstrap.js.map" />
+    <None Include="wwwroot\js\generate.js" />
+    <None Include="wwwroot\js\generate.js.map" />
+    <None Include="wwwroot\js\gradio.js" />
+    <None Include="wwwroot\js\gradio.js.map" />
+    <None Include="wwwroot\js\infiniteButts.js" />
+    <None Include="wwwroot\js\infiniteButts.js.map" />
+    <None Include="wwwroot\js\input.js" />
+    <None Include="wwwroot\js\input.js.map" />
+    <None Include="wwwroot\js\jquery.js" />
+    <None Include="wwwroot\js\jquery.js.map" />
+    <None Include="wwwroot\js\listener.js" />
+    <None Include="wwwroot\js\listener.js.map" />
+    <None Include="wwwroot\js\runtime.js" />
+    <None Include="wwwroot\js\runtime.js.map" />
+    <None Include="wwwroot\js\slots.js" />
+    <None Include="wwwroot\js\slots.js.map" />
+    <None Include="wwwroot\js\vendors.js" />
+    <None Include="wwwroot\js\vendors.js.map" />
+    <None Include="wwwroot\worker\loadButtsWorker.js" />
+    <None Include="wwwroot\worker\loadButtsWorker.js.map" />
+    <None Include="wwwroot\worker\tsconfig.tsbuildinfo" />
+    <None Include="wwwroot\worker\utils.js" />
+    <None Include="wwwroot\worker\utils.js.map" />
   </ItemGroup>
 
 
@@ -93,6 +113,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0-rc.2.23479.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <TypeScriptCompile Include="wwwroot\worker\loadButtsWorker.d.ts" />
+    <TypeScriptCompile Include="wwwroot\worker\utils.d.ts" />
   </ItemGroup>
 
 </Project>

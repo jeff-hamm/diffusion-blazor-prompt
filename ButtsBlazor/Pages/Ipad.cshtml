@@ -2,15 +2,33 @@
 @{
     Layout = "Shared/_Layout";
 }
-@model ButtsBlazor.Server.Pages.IndexModel
+@model ButtsBlazor.Server.Pages.IpadModel
 @{
     ViewData["Title"] = "Infinite Uploads";
 }
-<form method="post"  action="/ipad">
 
-    <input type="file" accept="image/*" capture="environment" />
-    
-</form>
+<style>
+    img {
+        max-height: 100%;
+        max-width: 100%;
+    }
+</style>
+<div class="fullscreen">
+    <form id="photo-form" method="post" class="fullscreen-content" action="/ipad" asp-antiforgery="true">
+        <div class="photo-container">
+            <img id="photo"/>
+        </div>
+        <div class="image-controls">
+            <label class="cameraButton btn btn-primary">
+                <span id="label">Take a picture</span>
+                <input id="cameraInput" name="file" type="file" accept="image/*" capture="environment"/>
+            </label>
+            <button type="button" id="rotate" class="image-control btn btn-primary">Rotate</button>
+            <button type="submit" id="save" class="image-control btn btn-primary">Save</button>
+        </div>
+    </form>
+</div>
 @section Scripts {
-    <script src="/js/infiniteButts.js?ver=236daae22266d8a6f59d"></script>
+    <script src="/js/jquery.js?ver=5"></script>
+    <script src="/js/ipad.js?ver=5"></script>
 }

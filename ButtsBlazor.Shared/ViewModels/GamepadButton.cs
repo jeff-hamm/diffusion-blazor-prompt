@@ -24,6 +24,8 @@ public enum GamepadButton
 {
     Select,
     Right,
+    LShoulder,
+    RShoulder,
     Left,
     Up,
     Down,

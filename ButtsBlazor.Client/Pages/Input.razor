@@ -6,18 +6,21 @@
 @using ButtsBlazor.Shared.Services
 @implements IAsyncDisposable
 
+
 @inject IButtsApiClient ApiClient
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject IButtsNotificationClient Notifications
 @inject PromptOptions Options
+@inject History History
 @inject PersistentComponentState ApplicationState
+<script src="/js/input.js?ver=1"></script>
 
 <div class="page-intro">
     <h1><strong>B</strong>ooty <strong>D</strong>esign</h1>
 </div>
 <section>
-    <RootPageControls IsLoading="IsLoading" @ref="Page" ReloadRequested="Reload" >    </RootPageControls>
+    <RootPageControls IsLoading="IsLoading" @ref="Page" ReloadRequested="Reload" NavigateBack="NavigateBack" >    </RootPageControls>
 
         <CascadingValue Value="Page">
 

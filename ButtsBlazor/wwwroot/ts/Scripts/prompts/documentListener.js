@@ -130,7 +130,7 @@ listener.on('gamepad:button', async (event) => {
             break;
         // left shoulder
         case 6:
-            code = "Left";
+            code = "LShoulder";
             break;
         // Select
         case 10:
@@ -138,7 +138,7 @@ listener.on('gamepad:button', async (event) => {
             break;
         // right shoulder
         case 7:
-            code = "Right";
+            code = "RShoulder";
         // Start
         case 11:
             code = "Start";

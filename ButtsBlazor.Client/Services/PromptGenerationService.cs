@@ -20,7 +20,11 @@ public class PromptGenerationService(Random random, PromptOptions promptOptions)
     internal IEnumerable<PromptChoice> Choices(PromptChoiceBuilder prompt)
     {
         if (random.NextChance(options.PortraitChance))
-            yield return prompt.Add(PromptPart.PortraitType, suffix: " of ");
+        {
+            var portrait = prompt.Add(PromptPart.PortraitType, suffix: " of ");
+            portrait.Choose(portrait.Choices.Length > 0 ? random.NextRequired(portrait.Choices) : "", preselected: true);
+            yield return portrait;
+        }
 
         var character = random.NextChance(options.CharacterChance);
         var prefix = random.NextChance(options.PrefixChance);

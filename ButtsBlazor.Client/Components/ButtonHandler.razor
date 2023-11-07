@@ -1,5 +1,6 @@
 ﻿@using ButtsBlazor.Shared.ViewModels
 @using ButtsBlazor.Client.Layout
+@using System.Runtime.InteropServices.JavaScript
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 
@@ -13,7 +14,7 @@
     [Parameter]
     public EventCallback<GamepadButton> ButtonPress { get; set; }
 
-    private ElementReference fallbackDiv;
+    private ElementReference? fallbackDiv;
     private DotNetObjectReference<ButtonHandler>? thisJsRef;
     private IJSObjectReference? jsModule;
     private IJSObjectReference? docListenerJsRef;
@@ -31,6 +32,8 @@
                 obj.Code.ToLower() switch 
                 {
                     "tab" => GamepadButton.Select,
+                    "bracketleft" => GamepadButton.LShoulder,
+                    "bracketright" => GamepadButton.RShoulder,
                     "arrowright" => GamepadButton.Right,
                     "keyd" => GamepadButton.Right,
                     "arrowleft" => GamepadButton.Left,
@@ -72,11 +75,11 @@
         if (firstRender)
         {
             thisJsRef = DotNetObjectReference.Create(this);
-            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js");
+            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js?ver=5");
             docListenerJsRef = await Js.InvokeAsync<IJSObjectReference>("listener.addDocumentListener", thisJsRef, "keydown", nameof(KeyDown));
+            if (Focus && fallbackDiv.HasValue)
+                await fallbackDiv.Value.FocusAsync();
         }
-        if (Focus)
-            await fallbackDiv.FocusAsync();
     }
 
     private bool isDisposed = false;

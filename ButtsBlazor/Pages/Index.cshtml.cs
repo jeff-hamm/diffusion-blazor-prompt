@@ -1,5 +1,6 @@
 ﻿using ButtsBlazor.Api.Services;
 using ButtsBlazor.Server.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace ButtsBlazor.Server.Pages
@@ -15,8 +16,12 @@ namespace ButtsBlazor.Server.Pages
             this.fileService = fileService;
         }
 
-        public void OnGet(string? pageName)
+        public ActionResult OnGet(string? pageName)
         {
+            if (Request.Headers.UserAgent.ToString().Contains("Mozilla/5.0 (IPad; CPU OS 10_3_3 like Mac OS X)"))
+                return RedirectToPage("./ipad");
+
+
             PageName = pageName?.ToLower() ?? "";
             ButtImage? image = null;
             if (Int32.TryParse(PageName, out var pageNumber))
@@ -25,7 +30,7 @@ namespace ButtsBlazor.Server.Pages
                 image = fileService.GetLatest(null);
             Image = image ?? fileService.GetLatestOrRandom();
             ViewData[nameof(ButtImage)] = Image;
-
+            return Page(); 
         }
         public ButtImage Image { get; set; } = ButtImage.Empty;
         public string? PageName { get; set; }

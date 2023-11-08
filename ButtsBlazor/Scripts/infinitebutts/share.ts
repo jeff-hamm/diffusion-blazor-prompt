@@ -21,7 +21,10 @@ export default function Share(element: HTMLElement) {
         const shareButton = h('button', {
             'aria-label': `${element.dataset.shareDevice}`,
             'data-share-item': ''
-        }, [h('i')]);
+        }, [h('img', { 
+            'src': '/share.svg',
+            'class': 'share-icon'
+        })]);
         shareButton.addEventListener('click', () => {
             navigator.share({
                 title: document.title,

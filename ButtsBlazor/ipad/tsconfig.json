@@ -1,0 +1,24 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "composite": true,
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "ES6",
+    "moduleResolution": "Node",
+    "module": "ES6",
+    "outDir": "wwwroot/ts",
+    "lib": [ "ES6", "DOM" ],
+    "rootDir": "."
+  },
+  "include": [ "**/*" ],
+  "paths": {
+    "*": [
+      "*",
+    ]
+  },
+  "baseUrl": ".",
+  "moduleSuffixes": [ ".cshtml", "" ]
+}

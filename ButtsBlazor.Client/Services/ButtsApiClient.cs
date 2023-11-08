@@ -57,10 +57,15 @@ public class ButtsApiClient(IHttpClientFactory clientFactory, IOptions<PromptOpt
                throw new InvalidOperationException($"Upload unexpectedly return null");
     }
 
-    public async Task<WebPath[]> GetRecentImages(int numImages)
+    public async Task<WebPath[]> GetRecentImages(int numImages, ImageType? type=null)
     {
         using var client = clientFactory.CreateClient();
-        var response = await client.GetAsync("/api/butts/recent?count=" + numImages);
+        var uri = "/api/butts/recent?count=" + numImages;
+        if (type.HasValue)
+        {
+            uri += "&type=" + type;
+        }
+        var response = await client.GetAsync(uri);
         return await response.Content.ReadFromJsonAsync<WebPath[]>() ?? Array.Empty<WebPath>();
     }
 }

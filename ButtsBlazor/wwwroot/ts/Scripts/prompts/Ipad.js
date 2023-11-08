@@ -23,7 +23,8 @@ function clear() {
         .attr('src', null);
     img.closest('form')
         .removeClass('loaded');
-    cropper?.destroy();
+    if (cropper)
+        cropper.destroy();
     cropper = null;
 }
 const minCroppedWidth = 200;
@@ -39,26 +40,30 @@ function onCrop(event) {
         });
     }
 }
-async function onFormSubmit(e) {
+function onFormSubmit(e) {
     e.preventDefault();
     var formData = new FormData(this);
-    await $.ajax({
+    $.ajax({
         type: "POST",
         url: "/ipad",
         data: formData,
         cache: false,
         contentType: false,
         processData: false
+    }).then(function () {
+        clear();
+        $('#cameraInput').click();
+    }).fail(function () {
+        clear();
+        alert("Upload error. Try again");
     });
-    clear();
-    $('#cameraInput').click();
 }
 let isRotated = false;
 let cropper;
 let options = {
     aspectRatio: 2 / 3,
     viewMode: 2,
-    crop: e => onCrop(e),
+    crop: function (e) { onCrop(e); },
     dragMode: 'move',
     autoCropArea: 1,
     restore: false,
@@ -90,14 +95,15 @@ function onImageSelected(image) {
 }
 function onRotateClicked() {
     rotateRatio();
-    cropper.destroy();
+    if (cropper)
+        cropper.destroy();
     cropper = new Cropper($('#photo')[0], options);
 }
 $(document).ready(() => {
     $("#cameraInput").change(function () {
         readURL(this);
     });
-    $('#rotate').click(() => onRotateClicked());
+    $('#rotate').click(onRotateClicked);
     $('#photo-form').submit(onFormSubmit);
 });
 //# sourceMappingURL=ipad.js.map

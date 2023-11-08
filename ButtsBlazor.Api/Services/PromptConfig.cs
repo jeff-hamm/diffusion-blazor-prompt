@@ -44,8 +44,7 @@ public class FakeButtsApiClient : IButtsApiClient
     {
         return Task.FromResult<UploadResult>(new UploadResult());
     }
-
-    public Task<WebPath[]> GetRecentImages(int numImages)
+    public Task<WebPath[]> GetRecentImages(int numImages, ImageType? type = null)
     {
         return Task.FromResult(Array.Empty<WebPath>());
     }

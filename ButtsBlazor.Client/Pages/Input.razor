@@ -34,7 +34,7 @@
                     foreach (var img in @images)
                     {
                         if (img.Entity != null && img.Item != null)
-                        {
+                        {   
                             <GridGalleryItem OnClick="e => OnClick(e, img)" Href="@img.Entity.Value" LinkClass="notitle" Size="img.Item.Value" Selected="@(img.Entity == images[SelectedIndex].Entity)"></GridGalleryItem>
                         }
                     }

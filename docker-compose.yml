@@ -3,30 +3,32 @@ version: '3.4'
 services:
   buttsblazor:
     image: sjc.vultrcr.com/infinitebutts/butts-prompts
+#    image: jumpmyman/butts-prompts
     build:
       context: .
       dockerfile: ./ButtsBlazor/Dockerfile
     volumes:
-      - ~/.butts/images:/app/wwwroot/butts_images
-      - ~/.butts/db:/app/db
+      - D:\OneDrive\AI\ButtsBlazor\ButtsBlazor\wwwroot\butts_images:/app/wwwroot/butts_images
+      - D:\OneDrive\AI\ButtsBlazor\ButtsBlazor\db:/app/db
     ports:
       - "8080:8080"
     restart: unless-stopped
 
-  # buttsgenerator:
-  #   image: sjc.vultrcr.com/infinitebutts/butts-generator
-  #   build:
-  #     context: ./ButtsBlazor.Generator
-  #     dockerfile: ./Dockerfile
-  #   volumes:
-  #     - ~/.cache:/home/user/.cache
-  #   ports:
-  #     - "7860:7860"
-  #   restart: unless-stopped
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: all
-  #             capabilities: [gpu]
+  buttsgenerator:
+    image: sjc.vultrcr.com/infinitebutts/butts-generator
+#    image: jumpmyman/butts-generator
+    build:
+      context: ./ButtsBlazor.Generator
+      dockerfile: ./Dockerfile
+    volumes:
+      - ~/.cache:/home/user/.cache
+    ports:
+      - "7860:7860"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

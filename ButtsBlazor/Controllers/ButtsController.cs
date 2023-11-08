@@ -21,8 +21,18 @@ namespace ButtsBlazor.Server.Controllers
     {
 
         [HttpGet("")]
-        public ButtImage? Get([FromQuery] DateTime? known, [FromQuery] int? except) => 
-            legacyFileService.GetLatestOrRandom(known, except);
+        public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except)
+        {
+            await foreach (var path in fileService.GetLatest(2, ImageType.Camera))
+            {
+                if (path.Index != except && path.Created > known)
+                    return path;
+            }
+
+            await foreach (var butt in fileService.GetRandom(1, ImageType.Infinite))
+                return butt;
+            return ButtImage.Empty;
+        }
 
         // GET: api/<ValuesController>
         [HttpGet("latest")]
@@ -44,8 +54,13 @@ namespace ButtsBlazor.Server.Controllers
         public PromptOptions GetOptions() => options.Value;
 
         [HttpGet("recent")]
-        public IAsyncEnumerable<WebPath> Get(int count) =>
-            fileService.GetLatestUploads(count);
+        public async Task<ICollection<WebPath>> Get(int count, ImageType imageType = ImageType.Camera)
+        {
+            var l = new List<WebPath>();
+            await foreach (var file in fileService.GetLatest(count, imageType))
+                l.Add(file.Path);
+            return l;
+        }
 
         [HttpGet("exists")]
         public string? Get(string imageHash)

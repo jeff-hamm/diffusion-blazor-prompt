@@ -1,0 +1,83 @@
+﻿@page "/output"
+@{
+    Layout = "Shared/_Layout";
+}
+@model ButtsBlazor.Server.Pages.OutputModel
+@{
+    ViewData["Title"] = "Infinite Uploads";
+}
+@using ButtsBlazor.Api.Model
+@using ButtsBlazor.Api.Services
+@using ButtsBlazor.Client.Services
+@using ButtsBlazor.Client.Utils
+@using ButtsBlazor.Server.Services
+@using ButtsBlazor.Shared.Services
+@inject FileService Files
+@inject PromptOptions Options
+<script src="/lib/fancybox.umd.js"></script>
+<link
+    rel="stylesheet"
+    href="/lib/fancybox.css"
+/>
+
+<section>
+    <style>
+        .gridOverflow {
+            --gridGap: @(Model.GridGap + "px");
+            --itemMinWidth: @(Model.ItemWidth + "px");
+            --itemAspectRatio: 1;
+            --itemRounding: @(Model.ItemRounding + "px");
+            --linkActionIcon: "@Model.ActionIcon";
+        }
+
+    </style>
+    <div style="max-width: 95vw; margin: auto;" tabindex="0">
+        <button onClick="window.location.reload();">Refresh Page</button>   
+        <div class="gridOverflow @Model.ExtraClasses go-actionIcon">
+            @if (Model.images != null)
+            {
+                foreach (var img in @Model.images)
+                {
+                    <a class="go_gridItem @Model.ExtraClasses" href="@img.Path" data-fancybox>
+                        <img src="@img.Path" alt="@img.Index" style="width: 100px; max-height: 100%; height: auto;"/>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+    <h1 id="output">
+
+    </h1>
+</section>
+<script src="/lib/jquery.min.js?ver=7"></script>
+
+<script type="text/javascript">
+    const oldLog = console.log;
+    console.log = function (message) {
+        $('#output').text(message);
+        oldLog.apply(this, arguments);
+    }
+    $(document).ready(function () {
+        $('body').on('click', '.go_gridItem', function (e) {
+
+            const $target = $(e.target);
+            const $shareButton = $(this);
+                const $img = $shareButton.find('img');
+            if (navigator.canShare) {
+                    navigator.share({
+                        title: $img.attr('alt'),
+                        text: $img.attr('alt'),
+                        url: $img.attr('src'),
+                    })
+                        .then(() => console.log('Successful share'))
+                        .catch((error) => console.log('Error sharing', error));
+                } else {
+                alert('Share not supported on this browser, do it the old way.')
+                    console.log('Share not supported on this browser, do it the old way.');
+                }
+        })
+    });
+    Fancybox.bind("[data-fancybox]", {
+        // Your custom options
+    });
+</script>

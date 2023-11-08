@@ -1,4 +1,5 @@
-﻿import { client, SpaceStatus} from "@gradio/client";
+﻿import { client, SpaceStatus } from "@gradio/client";
+import { Status } from "@gradio/client/src/types";
 
 export interface CannyConfig {
 	controlImgSize?: number,
@@ -91,7 +92,8 @@ export interface PredictReturn<T> {
 	endpoint: string,
 	fn_index: number,
 	time: object,
-	type: string
+	type: string,
+	event_data: unknown
 }
 export async function resetConfig(uriBase: string) {
 	const app = await getClient();
@@ -123,6 +125,55 @@ export async function generatePromptImage(cannyImage: string |Blob,prompt:string
 	catch(e) {
 		console.error(e);
 	}
+}
+
+async function run<T>(
+	endpoint: string,
+	data: unknown[],
+	event_data?: unknown,
+	status_callback?: (d: Status) => void
+): Promise<PredictReturn<T>> {
+	const client = await getClient();
+	let data_returned = false;
+	let status_complete = false;
+	return new Promise((res, rej) => {
+		const app = client.submit(endpoint, data, event_data);
+		let result: PredictReturn<T>;
+
+		app
+			.on("data", (d) => {
+				// if complete message comes before data, resolve here
+				const r: PredictReturn<T> = {
+					data: <T[]>d.data,
+					endpoint: d.endpoint,
+					fn_index: d.fn_index,
+					event_data: d.event_data,
+					time: d.time,
+					type: d.type,
+
+				}
+				if (status_complete) {
+					app.destroy();
+					res(r);
+				}
+				data_returned = true;
+				result = r;
+			})
+			.on("status", (status) => {
+				if (status.stage === "error") rej(status);
+				if (status.stage === "complete") {
+					status_complete = true;
+					// if complete message comes after data, resolve here
+					if (data_returned) {
+						app.destroy();
+						res(result);
+					}
+				}
+				if (status_callback) {
+					status_callback(status);
+				}
+			});
+	});
 }
 
 export default {

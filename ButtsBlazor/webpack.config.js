@@ -18,7 +18,7 @@ module.exports = {
         input: path.join(__dirname, "Scripts/prompts/index.ts"),
         gradio: path.join(__dirname, "Scripts/prompts/gradio.ts"),
         slots: path.join(__dirname, "Scripts/prompts/prompt.ts"),
-        ipad: path.join(__dirname, "Scripts/prompts/ipad.ts"),
+//        ipad: path.join(__dirname, "Scripts/prompts/ipad.ts"),
         generate: path.join(__dirname, "Scripts/prompts/generate.ts"),
         listener: path.join(__dirname, "Scripts/prompts/documentListener.ts"),
         
@@ -90,9 +90,15 @@ module.exports = {
                     reuseExistingChunk: true,
                     chunks: "all"
                 },
-                angular: {
+                jquery: {
                     test: /[\\/]node_modules[\\/]jquery/,
                     name: "jquery",
+                    reuseExistingChunk: true,
+                    chunks: "all"
+                },
+                cropperjs: {
+                    test: /[\\/]node_modules[\\/]cropperjs/,
+                    name: "cropperjs",
                     reuseExistingChunk: true,
                     chunks: "all"
                 },

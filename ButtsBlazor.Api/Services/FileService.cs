@@ -1,9 +1,12 @@
-﻿using System.Data;
+﻿using System.Collections.Concurrent;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Utils;
 using ButtsBlazor.Client.Services;
 using ButtsBlazor.Client.Utils;
+using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
 using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -73,54 +76,82 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         }
     }
 
+    private readonly SemaphoreSlim dbLock = new(1);
     private async Task SaveDbImage(ImageEntity image)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         dbContext.Images.Add(image);
-        await dbContext.SaveChangesAsync();
-    }
-
-    private readonly ReaderWriterLock recentLock = new ReaderWriterLock();
-    private const int LockTimeout = 1000;
-    private WebPath[]? recentList;
-    private WebPath[]? randomList;
-    private int imageCount;
-
-    public async IAsyncEnumerable<WebPath> GetLatestUploads(int count)
-    {
-
+        if(await dbLock.WaitAsync(config.DbLockTimeout) != true)
+            throw new Exception($"Unable to obtain database lock for image {image.Path.FilePath}");
         try
         {
-            await using var db = await dbContextFactory.CreateDbContextAsync();
-            recentLock.AcquireReaderLock(LockTimeout);
-            await RefreshRecent(db);
-            var randomCount = count switch
-            {
-                >= 12 => 4,
-                >= 8 => 2,
-                _ => 0
-            };
-            var remaining = count - randomCount;
-            foreach (var cameraImage in recentList)
-            {
-                yield return cameraImage;
-                remaining--;
-                if (remaining <= 0)
-                    break;
-
-            }
-
-            remaining += randomCount;
-            while (remaining > 0 && randomList?.Length > 0)
-            {
-                yield return random.NextRequired(randomList);
-                remaining--;
-            }
+            await dbContext.SaveChangesAsync();
         }
         finally
         {
-            recentLock.ReleaseReaderLock();
+            dbLock.Release();
         }
+    }
+
+    private readonly SemaphoreSlim recentLock = new (1);
+    private const int LockTimeout = 1000;
+    private Dictionary<ImageType, ButtImage[]>? recentList = null;
+
+    public async Task<IEnumerable<ButtImage>> GetLatestAndRandom(int maxLatestCount, int totalCount, ImageType imageType=ImageType.Camera)
+    {
+        var paths = new ButtImage[totalCount];
+        int count = 0;
+        await foreach (var recent in GetLatest(maxLatestCount, imageType))
+        {
+            if (count >= totalCount)
+                return paths;
+            paths[count] = recent;
+            count++;
+        }
+
+        var randomCount =
+            (totalCount - count);
+        await foreach (var recent in GetRandom(randomCount, imageType))
+        {
+            if (count >= totalCount)
+                return paths;
+            paths[count] = recent;
+            count++;
+        }
+        //    paths.Count switch
+        //{
+        //    >= 12 => 4,
+        //    >= 8 => 2,
+        //    _ => 0
+        //};
+        random.Shuffle(paths);
+        return paths;
+    }
+
+    public async IAsyncEnumerable<ButtImage> GetRandom(int count, ImageType imageType=ImageType.Infinite)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync();
+        while (count > 0 && await NextRandom(db, imageType) is { } randomImage)
+        {
+            yield return randomImage;
+            count--;
+        }
+
+    }
+
+    public async IAsyncEnumerable<ButtImage> GetLatest(int count, ImageType type = ImageType.Camera)
+    {
+            await using var db = await dbContextFactory.CreateDbContextAsync();
+            var recentPaths = await RefreshRecent(db, type);
+
+                foreach (var cameraImage in recentPaths)
+                {
+                    yield return cameraImage;
+                    count--;
+                    if (count <= 0)
+                        break;
+
+                }
         //var di = new DirectoryInfo(ToFilePath(UploadPath)).EnumerateFiles().MaxBy(f => f.LastWriteTime);
         //if (di == null) return null;
         //var path = Path.GetRelativePath(env.WebRootPath, di.FullName);
@@ -128,38 +159,62 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         //return new HashedImage(path, hash);
     }
 
-    [MemberNotNull("recentList")]
-    internal async Task RefreshRecent(ButtsDbContext db)
+    private readonly SemaphoreSlim randomImagesLock = new(1);
+    private ConcurrentDictionary<ImageType,ConcurrentBag<ButtImage>> randomImagesByType = new();
+    internal async Task<ButtImage?> NextRandom(ButtsDbContext db, ImageType imageType = ImageType.Infinite)
     {
-        int? newCount = null;
-        if (recentList == null || (newCount = (await db.Images.CountAsync())) != imageCount)
+        var randomImages = randomImagesByType.GetOrAdd(imageType, it => new ConcurrentBag<ButtImage>());
+        if (randomImages.TryTake(out var path))
+            return path;
+        await randomImagesLock.WaitAsync();
+        try
         {
-            LockCookie? lockCookie = null;
-            if (recentLock.IsReaderLockHeld)
-                lockCookie = recentLock.UpgradeToWriterLock(LockTimeout);
-            else
-                recentLock.AcquireWriterLock(LockTimeout);
-            try
-            {
-                imageCount = newCount ?? await db.Images.Where(i => i.Type == ImageType.Camera).CountAsync();
-                recentList = await db.Images.Where(i => i.Type == ImageType.Camera)
-                    .OrderByDescending(i => i.RowId)
-                    .Take(20).Select(s => s.Path).ToArrayAsync();
-                randomList = 
-                    await db.Images.Where(i => i.Type != ImageType.Output && i.Type != ImageType.Camera).OrderByDescending(i => i.RowId)
-                    .Select(s => s.Path).Take(50).ToArrayAsync();
-            }
-            finally
-            {
-                if (lockCookie.HasValue)
-                {
-                    var v = lockCookie.Value;
-                    recentLock.DowngradeFromWriterLock(ref v);
-                }
-                else
-                    recentLock.ReleaseWriterLock();
-            }
+            if (randomImages.TryTake(out path))
+                return path;
+            await foreach (var item in db.Images.Where(i => i.Type == imageType)
+                               .OrderBy(i => EF.Functions.Random())
+                               .Select(i => 
+                                   new ButtImage(i.Path, i.CreationDate, i.RowId, false))
+                               .Take(50).AsAsyncEnumerable())
+                randomImages.Add(item);
+            if(randomImages.TryTake(out path))
+                return path;
+            return null;
         }
+        finally
+        {
+            randomImagesLock.Release();
+        }
+    }
+
+    private int lastRowId;
+    [MemberNotNull("recentList")]
+    internal async Task<ButtImage[]> RefreshRecent(ButtsDbContext db, ImageType imageType)
+    {
+        int? newRowId = null;
+        if (recentList != null && (newRowId = await GetLastRowId(db)) == lastRowId)
+            return recentList.TryGetValue(imageType, out var val) ? val : Array.Empty<ButtImage>();
+        await recentLock.WaitAsync();
+        try {
+            var recentTime = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(config.ImagesRecentForMinutes));
+            lastRowId = newRowId ?? await GetLastRowId(db);
+            recentList = await db.Images.Where(i => i.CreationDate > recentTime)
+                .GroupBy(i => i.Type)
+                .ToDictionaryAsync(g => g.Key, g => 
+                    g.OrderByDescending(i => i.RowId).Select(s =>
+                        new ButtImage(s.Path, s.CreationDate,s.RowId)).ToArray());
+            return recentList.TryGetValue(imageType, out var val) ? val : Array.Empty<ButtImage>();
+        }
+        finally
+        {
+            recentLock.Release();
+        }
+
+    }
+
+    private static async Task<int> GetLastRowId(ButtsDbContext db)
+    {
+        return await db.Images.OrderByDescending(i => i.RowId).Select(i => i.RowId).FirstOrDefaultAsync();
     }
 
 
@@ -225,8 +280,16 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         };
         dbContext.Add(img);
         logger.LogDebug("Inserting image at {path} with type {imageType} and {id}",img.Path,img.Type, img.RowId);
-        await dbContext.SaveChangesAsync();
-        return img;
+        await dbLock.WaitAsync();
+        try
+        {
+            await dbContext.SaveChangesAsync();
+            return img;
+        }
+        finally
+        {
+            dbLock.Release();
+        }
     }
 
     public async Task<ImageMetadata> AttachImageMetadata(ImageEntity saveFileResult, string? prompt, string? code, string? inputImage)
@@ -241,7 +304,15 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             ImageEntity = saveFileResult
         };
         dbContext.Add(metadata);
-        await dbContext.SaveChangesAsync();
-        return metadata;
+        await dbLock.WaitAsync();
+        try
+        {
+            await dbContext.SaveChangesAsync();
+            return metadata;
+        }
+        finally
+        {
+            dbLock.Release();
+        }
     }
 }

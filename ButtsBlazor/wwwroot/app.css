@@ -17,6 +17,7 @@ div.modal {
 }
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden;
 }
 div#app:before {
     content: ' ';
@@ -217,13 +218,15 @@ div:focus {
 .lb-closeContainer {
     display: none;
 }
+.lb-data {
+    color: white;
+}
 
 .lb-data .lb-refresh {
     display: block;
     clear: left;
     padding-bottom: 1em;
     font-size: 12px;
-    color: #999;
 }
 
 #SSG1:after {
@@ -350,4 +353,8 @@ div.fullscreen {
 
 .lightboxOverlay {
     display: none !important;
+}
+
+.share-icon {
+    height: 15px;
 }

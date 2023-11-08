@@ -1,11 +1,8 @@
-﻿import * as $ from "jquery";
-import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.min.css'
-
+var $ = window.$;
+Cropper = window.Cropper;
 function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-
         reader.onload = function (e) {
             if (typeof e.target.result == "string") {
                 var img = $('#photo');
@@ -15,57 +12,57 @@ function readURL(input) {
             }
             else
                 console.error("Error", e);
-        }
-
+        };
         reader.readAsDataURL(input.files[0]);
     }
-} 
+}
 function clear() {
     var img = $('#photo');
     img.removeClass('cropper-hidden')
         .attr('src', null);
-
     img.closest('form')
-        .removeClass('loaded')
-    cropper?.destroy();
+        .removeClass('loaded');
+    if (cropper)
+        cropper.destroy();
     cropper = null;
 }
 const minCroppedWidth = 200;
 const minCroppedHeight = 200;
-function onCrop(event: Cropper.CropEvent<HTMLImageElement>) {
+function onCrop(event) {
     var width = Math.round(event.detail.width);
     var height = Math.round(event.detail.height);
-    if (
-        width < minCroppedWidth
-        || height < minCroppedHeight
-    ) {
+    if (width < minCroppedWidth
+        || height < minCroppedHeight) {
         event.currentTarget.cropper.setData({
             width: Math.max(minCroppedWidth, width),
             height: Math.max(minCroppedHeight, height),
         });
     }
 }
-async function onFormSubmit(e: JQuery.SubmitEvent) {
+function onFormSubmit(e) {
     e.preventDefault();
     var formData = new FormData(this);
-    await $.ajax({
+    $.ajax({
         type: "POST",
         url: "/ipad",
         data: formData,
         cache: false,
         contentType: false,
         processData: false
+    }).then(function () {
+        clear();
+        $('#cameraInput').click();
+    }).fail(function () {
+        clear();
+        alert("Upload error. Try again");
     });
-    clear();
-    $('#cameraInput').click();
-
 }
 let isRotated = false;
 let cropper;
-let options: Cropper.Options<HTMLImageElement> = {
-    aspectRatio: 2/3,
+let options = {
+    aspectRatio: 2 / 3,
     viewMode: 2,
-    crop: e => onCrop(e),
+    crop: function (e) { onCrop(e); },
     dragMode: 'move',
     autoCropArea: 1,
     restore: false,
@@ -80,13 +77,14 @@ function rotateRatio() {
     if (isRotated) {
         isRotated = false;
         options.aspectRatio = 2 / 3;
-    } else {
+    }
+    else {
         isRotated = true;
         options.aspectRatio = 3 / 2;
     }
 }
-function onImageSelected(image:JQuery) {
-    const imageEl = <HTMLImageElement>image.addClass('cropper-hidden')[0];
+function onImageSelected(image) {
+    const imageEl = image.addClass('cropper-hidden')[0];
     options.aspectRatio = 2 / 3;
     isRotated = false;
     if (imageEl.naturalWidth < imageEl.naturalHeight) {
@@ -96,14 +94,15 @@ function onImageSelected(image:JQuery) {
 }
 function onRotateClicked() {
     rotateRatio();
-    cropper.destroy();
-    cropper = new Cropper(<HTMLImageElement>$('#photo')[0], options);
+    if (cropper)
+        cropper.destroy();
+    cropper = new Cropper($('#photo')[0], options);
 }
-
 $(document).ready(() => {
     $("#cameraInput").change(function () {
         readURL(this);
     });
-    $('#rotate').click(() => onRotateClicked());
+    $('#rotate').click(onRotateClicked);
     $('#photo-form').submit(onFormSubmit);
-})
+});
+//# sourceMappingURL=ipad.js.map

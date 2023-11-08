@@ -24,12 +24,12 @@ namespace ButtsBlazor.Server.Pages
             Input = configMonitor.Value;
         }
 
-        public async Task OnPost()
-        {
-            if (Input.GradioUri != configMonitor.Value.GradioUri)
-            {
+        //public async Task OnPost()
+        //{
+        //    if (Input.GradioUri != configMonitor.Value.GradioUri)
+        //    {
 
-            }
-        }
+        //    }
+        //}
     }
 }

@@ -46,5 +46,8 @@
     "util": "^0.12.5",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@fancyapps/ui": "^5.0.26"
   }
 }

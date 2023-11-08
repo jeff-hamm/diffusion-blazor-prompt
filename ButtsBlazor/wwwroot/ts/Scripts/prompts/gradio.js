@@ -80,6 +80,48 @@ export async function generatePromptImage(cannyImage, prompt, negative, data) {
         console.error(e);
     }
 }
+async function run(endpoint, data, event_data, status_callback) {
+    const client = await getClient();
+    let data_returned = false;
+    let status_complete = false;
+    return new Promise((res, rej) => {
+        const app = client.submit(endpoint, data, event_data);
+        let result;
+        app
+            .on("data", (d) => {
+            // if complete message comes before data, resolve here
+            const r = {
+                data: d.data,
+                endpoint: d.endpoint,
+                fn_index: d.fn_index,
+                event_data: d.event_data,
+                time: d.time,
+                type: d.type,
+            };
+            if (status_complete) {
+                app.destroy();
+                res(r);
+            }
+            data_returned = true;
+            result = r;
+        })
+            .on("status", (status) => {
+            if (status.stage === "error")
+                rej(status);
+            if (status.stage === "complete") {
+                status_complete = true;
+                // if complete message comes after data, resolve here
+                if (data_returned) {
+                    app.destroy();
+                    res(result);
+                }
+            }
+            if (status_callback) {
+                status_callback(status);
+            }
+        });
+    });
+}
 export default {
     configure,
     generateCanny,

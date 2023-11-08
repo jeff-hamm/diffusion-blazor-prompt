@@ -8,5 +8,5 @@ public interface IButtsApiClient
 {
     Task<UploadResult> UploadFile(string dataUrlString,string prompt, string inputImage, string code);
     Task<UploadResult> UploadFile(IBrowserFile file);
-    Task<WebPath[]> GetRecentImages(int numImages);
+    Task<WebPath[]> GetRecentImages(int numImages, ImageType? type = null);
 }

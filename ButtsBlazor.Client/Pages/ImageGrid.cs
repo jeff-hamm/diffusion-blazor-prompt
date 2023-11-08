@@ -36,8 +36,8 @@ public class ImageGrid(Random random, int columns, int rows)
         int x = 0;
         return (extra switch
         {
-            6 => PlaceImages(entities, 1, 3, 4),
-            _ => throw new NotImplementedException()
+            6 => PlaceImages(entities, 1, 3, Columns),
+            _ => PlaceImages(entities,0,0,Columns)
         }).ToArray();
     }
 

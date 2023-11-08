@@ -6,13 +6,13 @@
 @{
     ViewData["Title"] = "Infinite Uploads";
 }
-
 <style>
     img {
         max-height: 100%;
         max-width: 100%;
     }
 </style>
+<link rel="stylesheet" href="/lib/cropper.min.css" />
 <div class="fullscreen">
     <form id="photo-form" method="post" class="fullscreen-content" action="/ipad" asp-antiforgery="true">
         <div class="photo-container">
@@ -29,6 +29,7 @@
     </form>
 </div>
 @section Scripts {
-    <script src="/js/jquery.js?ver=5"></script>
-    <script src="/js/ipad.js?ver=5"></script>
+    <script src="/lib/jquery.min.js?ver=7"></script>
+    <script src="/lib/cropper.min.js?ver=7"></script>
+    <script src="/lib/ipad-hack.js?ver=7"></script>
 }

@@ -52,14 +52,18 @@
 
 
   <ItemGroup>
+    <Content Remove="ipad\tsconfig.json" />
     <Content Remove="package.json" />
     <Content Remove="tsconfig.json" />
     <Content Remove="Worker\package.json" />
     <Content Remove="Worker\tsconfig.json" />
+    <Content Remove="wwwroot\lib\ipad - Copy.js.map" />
+    <Content Remove="wwwroot\lib\ipad.js.map" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <None Include="ipad\tsconfig.json" />
     <None Include="package.json" />
     <None Include="tsconfig.json" />
     <None Include="Worker\package.json" />
@@ -91,6 +95,8 @@
     <None Include="wwwroot\js\slots.js.map" />
     <None Include="wwwroot\js\vendors.js" />
     <None Include="wwwroot\js\vendors.js.map" />
+    <None Include="wwwroot\lib\ipad-hack.js.map" />
+    <None Include="wwwroot\lib\ipad.js.map" />
     <None Include="wwwroot\worker\loadButtsWorker.js" />
     <None Include="wwwroot\worker\loadButtsWorker.js.map" />
     <None Include="wwwroot\worker\tsconfig.tsbuildinfo" />

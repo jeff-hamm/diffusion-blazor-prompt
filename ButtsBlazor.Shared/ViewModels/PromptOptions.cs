@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Dynamic;
+using Microsoft.Extensions.Logging;
 
 namespace ButtsBlazor.Client.Utils;
 
 
 public class PromptOptions
 {
+    public int ImagesRecentForMinutes {get;set;} = 120;
     public string GradioUri { get; set; } = "https://butts.infinitebutts.com";
     public int MaxFileSize { get; set; } = 1024 * 1024 * 40;
     public int HistoryLength { get; set; } = 100;
@@ -24,4 +26,6 @@ public class PromptOptions
     public int NumChoices { get; set; } = 4;
     public int NumItemsPerChoice { get; set; } = 6;
     public int NumGeneratedImages { get; set; } = 1;
+    public int DbLockTimeoutSeconds { get; set; } = 60 * 2;
+    public TimeSpan DbLockTimeout => TimeSpan.FromSeconds(DbLockTimeoutSeconds);
 }

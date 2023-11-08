@@ -28,6 +28,7 @@ export interface PredictReturn<T> {
     fn_index: number;
     time: object;
     type: string;
+    event_data: unknown;
 }
 export declare function resetConfig(uriBase: string): Promise<unknown>;
 export declare function generate(srcImage: string, prompt: string, negative: string, data: PromptConfig): Promise<string[]>;

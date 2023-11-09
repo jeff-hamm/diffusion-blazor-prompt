@@ -1,0 +1,17 @@
+{
+    "controlScale": 0.25,
+    "controlnet": {
+        "crop": true,
+        "high": 200,
+        "img_size": 768,
+        "low": 100,
+        "scale": true,
+        "scaleDimension": 1,
+        "scaleUp": false
+    },
+    "img_size": 768,
+    "negative": "low quality, bad quality, sketches",
+    "numOutputs": 1,
+    "numSteps": 40,
+    "prompt": "a rear view of a butt, holding a futuristic cyborg tool, on the moon and with asteroids in the sky, Nikon Z9, Canon 5d, masterpiece"
+}

@@ -170,7 +170,7 @@ div:focus {
 
 .go-zoomFx > .go_gridItem.selected {
     border-radius: 3px;
-    transition: all .13s ease-in;
+    transition: all .25s ease-in;
     z-index: 999;
 }
 
@@ -243,6 +243,10 @@ div:focus {
 
 .countdown-timer {
     font-size: 0.5em;
+}
+
+.loaded .loading-container {
+    display: none;
 }
 
 .loading-container {
@@ -325,11 +329,10 @@ div.fullscreen {
 .fullscreen-content {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    margin: 10px;
-    max-height: 95vh;
-    max-width: 95vw;
-}
+    justify-content: start;
+    width: 100vw;
+/*    max-height: 100vh;
+*/}
 .photo-container {
     max-width: 95vw;
     max-height: 80vh;
@@ -345,9 +348,9 @@ div.fullscreen {
 .image-controls .image-control {
     display: none;
     margin-left: 10px;
-    margin-right: 10px;
-}
-.loaded .image-control {
+/*    margin-right: 10px;
+*/}
+.has-image .image-control {
     display: inline-block;
 }
 

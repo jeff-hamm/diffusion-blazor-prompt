@@ -61,6 +61,7 @@
 
     }
 
+    private GamepadButton? lastButton;
     private async Task OnButtonPress(GamepadButton obj)
     {
         ResetActivityTimeout();
@@ -76,21 +77,31 @@
             {
                 case GamepadButton.Start:
                     await ConfirmRestart();
+                    lastButton = GamepadButton.Start;
                     return;
                 case GamepadButton.Select:
                     await ConfirmRefresh();
+                    lastButton = GamepadButton.Select;
+
                     return;     
                 case GamepadButton.LShoulder:
                     await ConfirmBack();
+                    lastButton = GamepadButton.LShoulder;
                     return;
                 case GamepadButton.RShoulder:
-                    Navigation.Refresh(true);                    
+                    if (lastButton == GamepadButton.Secondary)
+                    {
+                        Navigation.Refresh(true);
+                        lastButton = GamepadButton.RShoulder;
+                    }
                     return;
             }
         }
         await ButtonPress.InvokeAsync(obj);
         foreach (var h in ButtonPressHandlers)
             await h.InvokeAsync(obj);
+        lastButton = obj;
+
     }
 
     [Parameter]

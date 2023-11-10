@@ -6,7 +6,7 @@ namespace ButtsBlazor.Client.Utils;
 
 public class PromptOptions
 {
-    public int ImagesRecentForMinutes {get;set;} = 120;
+    public int ImagesRecentForMinutes {get;set;} = 24*60;
     public string GradioUri { get; set; } = "https://butts.infinitebutts.com";
     public int MaxFileSize { get; set; } = 1024 * 1024 * 40;
     public int HistoryLength { get; set; } = 100;

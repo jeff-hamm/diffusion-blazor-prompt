@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.InteropServices;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Utils;
@@ -11,6 +12,8 @@ using ButtsBlazor.Services;
 using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using static System.Net.Mime.MediaTypeNames;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace ButtsBlazor.Api.Services;
 
@@ -81,15 +84,33 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         dbContext.Images.Add(image);
-        if(await dbLock.WaitAsync(config.DbLockTimeout) != true)
-            throw new Exception($"Unable to obtain database lock for image {image.Path.FilePath}");
+        await SaveChanges(dbContext);
         try
         {
-            await dbContext.SaveChangesAsync();
+            await EnsureThumbnail(image.Path);
         }
-        finally
+        catch (Exception ex)
         {
-            dbLock.Release();
+            logger.LogError(ex,$"Error saving thumbnail {image.Path} {ex}");
+        }
+    }
+
+    private async Task EnsureThumbnail(WebPath path)
+    {
+        var thumbWebPath = path.ToThumbnailPath();
+        if (thumbWebPath.FilePath is { Exists: false } thumbPath)
+        {
+            thumbPath.EnsureDirectory();
+            logger.LogInformation($"Resizing {path.Path} to {thumbPath}");
+            using var image = Image.Load<Rgb24>(path.FilePath);
+            int height = 300;
+            int width = 300;
+            if (image.Width > image.Height)
+                height = 0;
+            else
+                width = 0;
+            image.Mutate(x => x.Resize(width, height));
+            await image.SaveAsync(thumbPath);
         }
     }
 
@@ -97,26 +118,23 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
     private const int LockTimeout = 1000;
     private Dictionary<ImageType, ButtImage[]>? recentList = null;
 
-    public async Task<IEnumerable<ButtImage>> GetLatestAndRandom(int maxLatestCount, int totalCount, ImageType imageType=ImageType.Camera)
+    public async Task<IEnumerable<ButtImage>> GetLatestAndRandom(int maxLatestCount, int totalCount, ImageType imageType=ImageType.Output)
     {
-        var paths = new ButtImage[totalCount];
-        int count = 0;
+        var paths = new List<ButtImage>();
         await foreach (var recent in GetLatest(maxLatestCount, imageType))
         {
-            if (count >= totalCount)
+            if (paths.Count >= totalCount)
                 return paths;
-            paths[count] = recent;
-            count++;
+            paths.Add(recent);
         }
 
         var randomCount =
-            (totalCount - count);
-        await foreach (var recent in GetRandom(randomCount, imageType))
+            (totalCount - paths.Count);
+        await foreach (var recent in GetRandom(randomCount, ImageType.Infinite))
         {
-            if (count >= totalCount)
+            if (paths.Count >= totalCount)
                 return paths;
-            paths[count] = recent;
-            count++;
+            paths.Add(recent);
         }
         //    paths.Count switch
         //{
@@ -125,6 +143,11 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         //    _ => 0
         //};
         random.Shuffle(paths);
+        foreach (var path in paths)
+        {
+
+            await EnsureThumbnail(path.Path);
+        }
         return paths;
     }
 
@@ -133,6 +156,9 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         await using var db = await dbContextFactory.CreateDbContextAsync();
         while (count > 0 && await NextRandom(db, imageType) is { } randomImage)
         {
+            if (!randomImage.Path.FilePath.Exists)
+                continue;
+
             yield return randomImage;
             count--;
         }
@@ -146,6 +172,8 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
 
                 foreach (var cameraImage in recentPaths)
                 {
+                    if(!cameraImage.Path.FilePath.Exists)
+                        continue;
                     yield return cameraImage;
                     count--;
                     if (count <= 0)
@@ -187,17 +215,20 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         }
     }
 
-    private int lastRowId;
+    private bool hasChanges;
+//    private int lastRowId;
     [MemberNotNull("recentList")]
     internal async Task<ButtImage[]> RefreshRecent(ButtsDbContext db, ImageType imageType)
     {
         int? newRowId = null;
-        if (recentList != null && (newRowId = await GetLastRowId(db)) == lastRowId)
+        if (recentList != null && !hasChanges)
             return recentList.TryGetValue(imageType, out var val) ? val : Array.Empty<ButtImage>();
-        await recentLock.WaitAsync();
+        //if (!await recentLock.WaitAsync(TimeSpan.FromSeconds(60)))
+        //    throw new InvalidOperationException("Could not get recentLock");
         try {
-            var recentTime = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(config.ImagesRecentForMinutes));
-            lastRowId = newRowId ?? await GetLastRowId(db);
+            var recentTime = DateTime.Now.Subtract(TimeSpan.FromMinutes(config.ImagesRecentForMinutes));
+            hasChanges = false;
+//            lastRowId = newRowId ?? await GetLastRowId(db);
             recentList = await db.Images.Where(i => i.CreationDate > recentTime)
                 .GroupBy(i => i.Type)
                 .ToDictionaryAsync(g => g.Key, g => 
@@ -207,15 +238,15 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         }
         finally
         {
-            recentLock.Release();
+//            recentLock.Release();
         }
 
     }
 
-    private static async Task<int> GetLastRowId(ButtsDbContext db)
-    {
-        return await db.Images.OrderByDescending(i => i.RowId).Select(i => i.RowId).FirstOrDefaultAsync();
-    }
+    //private async Task<int> GetLastRowId(ButtsDbContext db)
+    //{
+    //    return await db.Images.OrderByDescending(i => i.RowId).Select(i => i.RowId).FirstOrDefaultAsync();
+    //}
 
 
     public bool TryFindExistingUpload(string base64Hash, [NotNullWhen(true)] out string? relativePath)
@@ -280,11 +311,16 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         };
         dbContext.Add(img);
         logger.LogDebug("Inserting image at {path} with type {imageType} and {id}",img.Path,img.Type, img.RowId);
+        await SaveChanges(dbContext);
+        return img;
+    }
+
+    private async Task SaveChanges(ButtsDbContext dbContext)
+    {
         await dbLock.WaitAsync();
         try
         {
-            await dbContext.SaveChangesAsync();
-            return img;
+            hasChanges =  (await dbContext.SaveChangesAsync()) > 0;
         }
         finally
         {
@@ -304,15 +340,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             ImageEntity = saveFileResult
         };
         dbContext.Add(metadata);
-        await dbLock.WaitAsync();
-        try
-        {
-            await dbContext.SaveChangesAsync();
-            return metadata;
-        }
-        finally
-        {
-            dbLock.Release();
-        }
+        await SaveChanges(dbContext);
+        return metadata;
     }
 }

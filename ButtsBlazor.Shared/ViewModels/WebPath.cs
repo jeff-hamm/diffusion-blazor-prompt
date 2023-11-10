@@ -12,6 +12,7 @@ public struct WebPath : IEquatable<WebPath>
             throw new ArgumentNullException(nameof(webPath));
         this.Path = webPath;
     }
+
     public string Path { get; set; }
     public FilePath FilePath => PathConverterAccessor.PathConverter.ToFilePath(this);
     public override string ToString() => Path;
@@ -43,6 +44,9 @@ public struct WebPath : IEquatable<WebPath>
     {
         return !left.Equals(right);
     }
+
+    public WebPath ToThumbnailPath() =>
+        new (System.IO.Path.Combine("butt_thumbs", Path));
 }
 
 public class WebPathJsonConverter : JsonConverter<WebPath>

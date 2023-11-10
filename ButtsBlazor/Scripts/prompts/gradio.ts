@@ -1,5 +1,6 @@
 ﻿import { client, SpaceStatus } from "@gradio/client";
-import { Status } from "@gradio/client/src/types";
+import { Status, Payload, LogMessage } from "@gradio/client/src/types";
+import { DotNet } from "@microsoft/dotnet-js-interop";
 
 export interface CannyConfig {
 	controlImgSize?: number,
@@ -49,13 +50,12 @@ export async function toBlob(imageUrl: string | Blob): Promise<Blob> {
 
 
 
-export async function generateCanny(srcImage: string | Blob, data: CannyConfig): Promise<Blob> {
+export async function generateCanny(srcImage: string | Blob, data: CannyConfig, callbackObj?: DotNet.DotNetObject | StatusCallback): Promise<Blob> {
 	const srcImageBlob = await toBlob(srcImage)
-	const app = await getClient();
 	const args = [
 		srcImageBlob, 	// blob in 'Source' Image component		
 	].concat(toArgs(data));
-	const result = <PredictReturn<Blob>>await app.predict("/generate_canny", args);
+	const result = await run<Blob>("/generate_canny", args,callbackObj);
 
 	console.log(result);
 	return result.data[0];
@@ -76,7 +76,7 @@ function toArgs(data: CannyConfig) : any[] {
 export async function saveConfig(data: PromptConfig) {
 	const app = await getClient();
 
-	const result = await app.predict("/save_config", [
+	const result = await run<any>("/save_config", [
 		data?.numOutputs,
 	     data?.imgSize, // number  in 'Image Size' Number component
 	     data?.numSteps, // number  in 'Num. Steps' Number component
@@ -87,30 +87,46 @@ export async function saveConfig(data: PromptConfig) {
 	return result;
 }
 
-export interface PredictReturn<T> {
-	data: T[],
-	endpoint: string,
-	fn_index: number,
-	time: object,
-	type: string,
-	event_data: unknown
-}
+//export interface PredictReturn<T> {
+//	data: T[],
+//	endpoint: string,
+//	fn_index: number,
+//	time: object,
+//	type: string,
+//	event_data: unknown
+//}
 export async function resetConfig(uriBase: string) {
 	const app = await getClient();
-	const result = await app.predict("/reset_config", []);
+	const result = await run<any>("/reset_config", []);
 
 	console.log(result);
 	return result;
 }
-export async function generate(srcImage: string, prompt: string, negative: string, data: PromptConfig) {
-	const canny = await generateCanny(srcImage, data?.cannyConfig);
-	return await generatePromptImage(<Blob><any>canny, prompt, negative, data);
+function toStatusCallback(callbackObj?: DotNet.DotNetObject | StatusCallback): StatusCallback {
+	if (!callbackObj) return null;
+	if (typeof callbackObj == "function")
+		return callbackObj;
+	return status => callbackObj.invokeMethodAsync("Callback", status);
 }
-export async function generatePromptImage(cannyImage: string |Blob,prompt:string,negative:string,data:PromptConfig): Promise<string[]> {
-	const cannyBlob = await toBlob(cannyImage)
-	const app = await getClient();
+function disposeStatusCallback(callbackObj?: DotNet.DotNetObject | StatusCallback) {
+	if (!callbackObj)
+		return;
+	if (typeof callbackObj != "function")
+		callbackObj.dispose();
+}
+export async function generate(srcImage: string, prompt: string, negative: string, data: PromptConfig, callbackObj?: DotNet.DotNetObject | StatusCallback) {
 	try {
-		const result = <PredictReturn<string>>await app.predict('/generate_prompt', [
+		const canny = await generateCanny(srcImage, data?.cannyConfig, callbackObj);
+		return await generatePromptImage(<Blob><any>canny, prompt, negative, data, callbackObj);
+	}
+	finally {
+		disposeStatusCallback(callbackObj);
+	}
+}
+export async function generatePromptImage(cannyImage: string | Blob, prompt: string, negative: string, data: PromptConfig, callbackObj?: DotNet.DotNetObject | StatusCallback): Promise<string[]> {
+	const cannyBlob = await toBlob(cannyImage)
+	try {
+		const result = await run<string>('/generate_prompt', [
 			cannyBlob, 	// blob in 'ControlNet Output' Image component		
 			prompt, // string  in 'Prompt' Textbox component		
 			negative, // string  in 'Negative Prompt' Textbox component		
@@ -118,7 +134,7 @@ export async function generatePromptImage(cannyImage: string |Blob,prompt:string
 			data?.imgSize ?? 1024, // number  in 'Image Size' Number component		
 			data?.numSteps ?? 40, // number  in 'Num. Steps' Number component		
 			data?.controlScale ?? 0.45, // number  in 'Control Scale' Number component
-		]);
+		],callbackObj);
 		console.log(result);
 		return result.data;
 	}
@@ -126,54 +142,77 @@ export async function generatePromptImage(cannyImage: string |Blob,prompt:string
 		console.error(e);
 	}
 }
+type SubmitEvent = { type: string; endpoint: string; fn_index: number };
+export interface PayloadResponse<T> {
+	data: T[];
+	fn_index?: number;
+	event_data?: unknown;
+	time?: Date;
+}
 
+type StatusEvent = Status & SubmitEvent;
+type DataEvent<T> = PayloadResponse<T> & SubmitEvent;
+type LogEvent = LogMessage & SubmitEvent;
+type StatusCallback = (d: Status) => void;
 async function run<T>(
 	endpoint: string,
 	data: unknown[],
-	event_data?: unknown,
-	status_callback?: (d: Status) => void
-): Promise<PredictReturn<T>> {
+	callbackObj?: DotNet.DotNetObject | StatusCallback,
+	event_data?: unknown): Promise<PayloadResponse<T>> {
 	const client = await getClient();
 	let data_returned = false;
 	let status_complete = false;
+	let error_sent = false;
 	return new Promise((res, rej) => {
-		const app = client.submit(endpoint, data, event_data);
-		let result: PredictReturn<T>;
-
-		app
-			.on("data", (d) => {
+		let app;
+		let status_callback = toStatusCallback(callbackObj);
+		try {
+			app = client.submit(endpoint, data, event_data);
+			let result: PayloadResponse<T>;
+			app.on("data", (d: DataEvent<T>) => {
 				// if complete message comes before data, resolve here
-				const r: PredictReturn<T> = {
-					data: <T[]>d.data,
-					endpoint: d.endpoint,
-					fn_index: d.fn_index,
-					event_data: d.event_data,
-					time: d.time,
-					type: d.type,
-
-				}
 				if (status_complete) {
 					app.destroy();
-					res(r);
+					disposeStatusCallback(status_callback);
+					status_callback = null;
+					res(d);
 				}
 				data_returned = true;
-				result = r;
+				result = d;
 			})
-			.on("status", (status) => {
-				if (status.stage === "error") rej(status);
-				if (status.stage === "complete") {
-					status_complete = true;
-					// if complete message comes after data, resolve here
-					if (data_returned) {
-						app.destroy();
-						res(result);
+				.on("status", (status: Status) => {
+					if (status_callback) {
+						status_callback(status);
 					}
-				}
-				if (status_callback) {
-					status_callback(status);
-				}
-			});
+					if (status.stage === "error") {
+						error_sent = true;
+						disposeStatusCallback(status_callback);
+						status_callback = null;
+						rej(status);
+					}
+					if (status.stage === "complete") {
+						status_complete = true;
+						// if complete message comes after data, resolve here
+						if (data_returned) {
+							app.destroy();
+							disposeStatusCallback(status_callback);
+							status_callback = null;
+							res(result);
+						}
+					}
+				});
+		}
+		catch (e) {
+			if (app && data_returned) {
+				app.destroy();
+				disposeStatusCallback(status_callback);
+				status_callback = null;
+			}
+			if (!data_returned && !status_complete && !error_sent)
+				rej(e);
+		}
 	});
+
 }
 
 export default {

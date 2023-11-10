@@ -7,7 +7,22 @@ public static class RandomExtensions
         : throw new InvalidOperationException($"Array was empty");
     public static T? Next<T>(this Random random, T[] array) where T:notnull => array.Length > 0 ? array[random.Next(array.Length)] : default;
     public static T? Next<T>(this Random random, IList<T> array) where T : notnull => array.Count > 0 ? array[random.Next(array.Count)] : default;
+    public static void Shuffle<T>(this Random @this, List<T> values)
+    {
+        int n = values.Count;
 
+        for (int i = 0; i < n - 1; i++)
+        {
+            int j = @this.Next(i, n);
+
+            if (j != i)
+            {
+                T temp = values[i];
+                values[i] = values[j];
+                values[j] = temp;
+            }
+        }
+    }
     public static IEnumerable<T> RemoveNext<T>(this Random random, IList<T> array, int? count=null) where T : IEquatable<T>
     {
         if(count == null || count > array.Count)

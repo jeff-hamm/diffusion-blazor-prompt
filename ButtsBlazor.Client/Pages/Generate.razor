@@ -32,6 +32,11 @@
                 <span class="text-danger">Error Generating Image. Trying again...</span>
             }
         </FullscreenImage>
+        @if (StatusMessage != null)
+        {
+            <span class="status-message">@StatusMessage</span>
+        }
+
     </CascadingValue>
 
 </section>
@@ -54,7 +59,13 @@
 
     private string[]? imageSrc;
     private string? image;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        callbackHelper = new CallbackHelper<GradioStatus?>(StatusUpdate);
+    }
 
+    private string? StatusMessage { get; set; }
     private IJSObjectReference? _promptModule;
     protected override async Task OnParametersSetAsync()
     {
@@ -63,6 +74,7 @@
         {
             NumOutputs = Options.NumGeneratedImages
         };
+        StatusMessage = null;
     }
 
     private GeneratorPromptConfig? generatorConfig;
@@ -71,6 +83,18 @@
     {
         if (firstRender)
             await Reload();
+    }
+
+    private async Task StatusUpdate(GradioStatus? status)
+    {
+        await InvokeAsync(() =>
+        {
+            StatusMessage = status?.Message ?? "";
+            if (status?.progress_data is {} p)
+                StatusMessage += $"{p.Desc} [{p.Progress}/{p.Length}]";
+
+            StateHasChanged();
+        });
     }
     private async Task Reload()
     {
@@ -82,13 +106,18 @@
         StateHasChanged();
         try
         {
+            
             if (_promptModule != null)
                 await _promptModule.DisposeAsync();
             _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
             await JsRuntime.InvokeVoidAsync("generate.configure",
                 Options.GradioUri, null);
+            var callback = 
+                callbackHelper != null ?
+                    DotNetObjectReference.Create(callbackHelper) : null;
+
             imageSrc = await JsRuntime.InvokeAsync<string[]>("generate.generate",
-                Image, Prompt, "", generatorConfig);
+                Image, Prompt, "", generatorConfig, callback);
             HasGenerated = true;
             if (imageSrc.Length > 0)
                 image = imageSrc[0];
@@ -97,6 +126,8 @@
         {
             HasError = true;
             Console.WriteLine("Error {0}, {1}", ex.Message, ex);
+            StatusMessage = ex.Message;
+
         }
         finally
         {
@@ -124,6 +155,8 @@
     }
 
     Random random = new Random();
+    private CallbackHelper<GradioStatus?>? callbackHelper;
+
     private async Task ConfirmNext()
     {
         if (Page == null) return;
@@ -157,6 +190,7 @@
             return;
         await ConfirmNext();
     }
+
 
 
 }

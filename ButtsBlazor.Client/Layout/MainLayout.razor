@@ -4,7 +4,21 @@
 <div class="page">
     <main>
         <article class="content px-4">
-            @Body
+            <ErrorBoundary>
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent>
+                    <div class="border p-4 text-danger">
+                        Sorry about that, something seems to have gone awry. Refreshing...
+                    </div>
+                    <script type="text/javascript">
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    </script>
+                </ErrorContent>
+            </ErrorBoundary>
         </article>
     </main>
 </div>

@@ -6,7 +6,7 @@ function readURL(input) {
         reader.onload = function (e) {
             if (typeof e.target.result == "string") {
                 var img = $('#photo');
-                img.closest('form').addClass('loaded');
+                img.closest('form').addClass('has-image');
                 img.attr('src', e.target.result);
                 onImageSelected(img);
             }
@@ -21,7 +21,7 @@ function clear() {
     img.removeClass('cropper-hidden')
         .attr('src', null);
     img.closest('form')
-        .removeClass('loaded');
+        .removeClass('has-image');
     if (cropper)
         cropper.destroy();
     cropper = null;
@@ -42,7 +42,8 @@ function onCrop(event) {
 function onFormSubmit(e) {
     e.preventDefault();
     var formData = new FormData(this);
-    $.ajax({
+    $photoForm.removeClass('loaded');
+    $.ajax({    
         type: "POST",
         url: "/ipad",
         data: formData,
@@ -51,10 +52,12 @@ function onFormSubmit(e) {
         processData: false
     }).then(function () {
         clear();
-        $('#cameraInput').click();
+        $cameraInput.click();
     }).fail(function () {
         clear();
         alert("Upload error. Try again");
+    }).always(function () {
+        $photoForm.addClass("loaded");
     });
 }
 let isRotated = false;
@@ -98,8 +101,11 @@ function onRotateClicked() {
         cropper.destroy();
     cropper = new Cropper($('#photo')[0], options);
 }
+let $photoForm;
+let $cameraInput;
 $(document).ready(() => {
-    $("#cameraInput").change(function () {
+    $photoForm = $('#photo-form');
+    $cameraInput = $("#cameraInput").change(function () {
         readURL(this);
     });
     $('#rotate').click(onRotateClicked);

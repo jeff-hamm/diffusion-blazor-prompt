@@ -1,7 +1,0 @@
-torch==2.1.0+cu118 
---extra-index-url https://pypi.nvidia.com
-nvidia-nccl-cu11;
-..\..\TensorRT-8.6.1.6\python\tensorrt_lean-8.6.1-cp310-none-win_amd64.whl
-..\..\TensorRT-8.6.1.6\graphsurgeon\graphsurgeon-0.4.6-py2.py3-none-any.whl
-..\..\TensorRT-8.6.1.6\uff\uff-0.6.9-py2.py3-none-any.whl
-..\..\TensorRT-8.6.1.6\onnx_graphsurgeon\onnx_graphsurgeon-0.3.12-py2.py3-none-any.whl

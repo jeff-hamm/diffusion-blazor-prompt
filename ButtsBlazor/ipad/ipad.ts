@@ -9,7 +9,7 @@ function readURL(input) {
         reader.onload = function (e) {
             if (typeof e.target.result == "string") {
                 var img = $('#photo');
-                img.closest('form').addClass('loaded');
+                img.closest('form').addClass('has-image');
                 img.attr('src', e.target.result);
                 onImageSelected(img);
             }
@@ -26,7 +26,7 @@ function clear() {
         .attr('src', null);
 
     img.closest('form')
-        .removeClass('loaded')
+        .removeClass('has-image')
     if(cropper)
         cropper.destroy();
     cropper = null;

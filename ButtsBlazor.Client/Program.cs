@@ -20,7 +20,7 @@ builder.RootComponents.Add<Routes>("#app");
 builder.Services.AddHttpClient("").ConfigureHttpClient(c =>
 {
     c.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
-});
+}).AddPolicyHandler(GetRetryPolicy());
 
 // Add services to the container.
 //builder.Services.AddHttpClient("",
@@ -37,11 +37,11 @@ var app = builder.Build();
 await app.UseButts();
 await app.RunAsync();
 
-//static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-//{
-    
-//    return HttpPolicyExtensions
-//        .HandleTransientHttpError()
-//        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-//        .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-//}
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+{
+
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+        .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+}

@@ -1,15 +1,13 @@
-//import * as $ from "./jquery.min.js";
-//import Cropper from './cropper.min.js';
-
-$ = window.$;
-Cropper = window.Cropper;
+import * as $ from "jquery";
+import Cropper from 'cropperjs/dist/cropper.min.js';
+import 'cropperjs/dist/cropper.min.css';
 function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
         reader.onload = function (e) {
             if (typeof e.target.result == "string") {
                 var img = $('#photo');
-                img.closest('form').addClass('loaded');
+                img.closest('form').addClass('has-image');
                 img.attr('src', e.target.result);
                 onImageSelected(img);
             }
@@ -24,7 +22,7 @@ function clear() {
     img.removeClass('cropper-hidden')
         .attr('src', null);
     img.closest('form')
-        .removeClass('loaded');
+        .removeClass('has-image');
     if (cropper)
         cropper.destroy();
     cropper = null;

@@ -14,7 +14,11 @@
 </style>
 <link rel="stylesheet" href="/lib/cropper.min.css" />
 <div class="fullscreen">
-    <form id="photo-form" method="post" class="fullscreen-content" action="/ipad" asp-antiforgery="true">
+    <form id="photo-form" method="post" class="fullscreen-content loaded" action="/ipad" asp-antiforgery="true">
+        <div class="loading-container">
+            <img src="/infinitypeach.svg" width="100" height="100" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="circle-notch" class="spin loading-icon" role="img" />
+        </div>
+
         <div class="photo-container">
             <img id="photo"/>
         </div>
@@ -23,8 +27,8 @@
                 <span id="label">Take a picture</span>
                 <input id="cameraInput" name="file" type="file" accept="image/*" capture="environment"/>
             </label>
-            <button type="button" id="rotate" class="image-control btn btn-primary">Rotate</button>
-            <button type="submit" id="save" class="image-control btn btn-primary">Save</button>
+@*             <button type="button" id="rotate" class="image-control btn btn-primary">Rotate</button>
+ *@            <button type="submit" id="save" class="image-control btn btn-primary">Save</button>
         </div>
     </form>
 </div>

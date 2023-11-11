@@ -58,7 +58,7 @@ public partial class Input()
         IsLoading = true;
         StateHasChanged();
         grid?.Clear();
-        var entities = await ApiClient.GetRecentImages(NumImages);
+        var entities = await ApiClient.GetRecentImages(NumImages, ImageType.Camera);
         images = entities?.Length > 0 ? grid?.Place(entities) : Array.Empty<GridSquare>();
         IsLoading = false;
         StateHasChanged();
@@ -137,7 +137,9 @@ public partial class Input()
     {
 //        await DisposeAsync();
 
-        Navigation.NavigateTo($"/prompt?image={images?[selectedIndex].Entity?.Path}&code={Seed.ToBase64String()[..^2]}");
+        var path = images?[selectedIndex].Entity?.Path.Replace("\\thumbnails", "");
+        path = path.Replace("/thumbnails", "");
+        Navigation.NavigateTo($"/prompt?image={path}&code={Seed.ToBase64String()[..^2]}");
         return Task.CompletedTask;
     }
 

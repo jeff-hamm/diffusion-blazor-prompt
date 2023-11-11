@@ -9,6 +9,7 @@ using System.Net;
 using ButtsBlazor.Client.Utils;
 using ButtsBlazor.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.IO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,14 +24,44 @@ namespace ButtsBlazor.Server.Controllers
         [HttpGet("")]
         public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except)
         {
+            bool isMostRecent = true;
             await foreach (var path in fileService.GetLatest(2, ImageType.Output))
             {
-                if (path.Index != except && path.Created > known)
+                if (isMostRecent)
+                {
+                    path.IsLatest = true;
+                    isMostRecent = false;
+                }
+                else
+                {
+                    path.IsLatest = false;
+                }
+                if (path.Index != except && (!known.HasValue || path.Created > known))
+                    return path;
+            }
+            isMostRecent = true;
+            await foreach (var path in fileService.GetLatest(2, ImageType.Infinite))
+            {
+                if (isMostRecent)
+                {
+                    path.IsLatest = true;
+                    isMostRecent = false;
+                }
+                else
+                {
+                    path.IsLatest = false;
+                }
+                if (path.Index != except && (!known.HasValue || path.Created > known))
                     return path;
             }
 
             await foreach (var butt in fileService.GetRandom(1, ImageType.Infinite))
+            {
+
+                butt.IsLatest = false;
                 return butt;
+            }
+
             return ButtImage.Empty;
         }
 
@@ -54,9 +85,9 @@ namespace ButtsBlazor.Server.Controllers
         public PromptOptions GetOptions() => options.Value;
 
         [HttpGet("recent")]
-        public async Task<IEnumerable<WebPath>> Get(int count, ImageType imageType = ImageType.Camera)
+        public async Task<IEnumerable<WebPath>> Get(int count, ImageType type = ImageType.Output)
         {
-            return (await fileService.GetLatestAndRandom(count, 4, imageType)).Select(s => s.ThumbnailPath);
+            return (await fileService.GetLatestAndRandom(count > 12 ? count - 4 : count-2, count, type)).Where(s => s.ThumbnailPath.HasValue).Select(s =>  s.ThumbnailPath!.Value);
         }
 
         [HttpGet("exists")]

@@ -106,7 +106,7 @@
         StateHasChanged();
         try
         {
-            
+
             if (_promptModule != null)
                 await _promptModule.DisposeAsync();
             _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
@@ -119,8 +119,10 @@
             imageSrc = await JsRuntime.InvokeAsync<string[]>("generate.generate",
                 Image, Prompt, "", generatorConfig, callback);
             HasGenerated = true;
-            if (imageSrc.Length > 0)
+            if (imageSrc?.Length > 0)
                 image = imageSrc[0];
+            else
+                HasError = true;
         }
         catch (Exception ex)
         {
@@ -143,7 +145,7 @@
         {
             case GamepadButton.Select:
                 await PromptSave("Reloading");
-                await Reload();
+//                await Reload();
                 break;
             case GamepadButton.Start:
             case GamepadButton.Primary:
@@ -160,8 +162,7 @@
     private async Task ConfirmNext()
     {
         if (Page == null) return;
-        await PromptSave("Restarting");
-        Navigation.NavigateTo("/input");
+        await PromptSave("Butts Complete!");
     }
 
     private async Task PromptSave(string title)
@@ -169,14 +170,20 @@
         if (imageSrc?.Length > 0)
         {
             var code = random.Next().ToBase64StringNoPadding();
-            var dialog = await Page.Confirm.Show(
-                $"This image will be displayed next! Would you like to save this image before restarting? You can recover it later with the code <span class='save-code'>{code}</span>.",
-                title + " - Save Image?", "Delete", "Save", timeout: 60);
+            await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
+            var dialog = await Page?.Confirm.Show(
+                $"This image will be displayed next! You can recover it later by entering the code <span class='save-code'>{code}</span>. Would you like to generate another with this prompt or start over?",
+                title + "?", "Start Over", "Do it Again!", timeout: 60);
             var r = await dialog.WaitForResult();
-            if (r is ConfirmationResult.Cancel)
+            if (r is ConfirmationResult.Timeout or ConfirmationResult.Confirm)
             {
-                await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
+                Navigation.NavigateTo("/input");
             }
+            else
+            {
+                await Reload();
+            }
+                
         }
     }
 

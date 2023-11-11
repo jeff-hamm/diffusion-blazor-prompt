@@ -65,8 +65,11 @@ public class OutputModel : PageModel
         IsLoading = true;
         grid?.Clear();
         images = new();
-        await foreach(var image in fileService.GetLatest(NumImages))
+        await foreach(var image in fileService.GetLatest(NumImages, ImageType.Output))
             images.Add(image);
+        await foreach (var image in fileService.GetLatest(NumImages, ImageType.Camera))
+            images.Add(image);
+        images.Sort((one,two) => one.Created.CompareTo(two.Created));
         IsLoading = false;
     }
 

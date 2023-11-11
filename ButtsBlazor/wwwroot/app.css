@@ -253,6 +253,7 @@ div:focus {
     z-index: 5000;
     width: 100vw;
     height: 100vh;
+    position: absolute;
 }
 
 .loading-container i {
@@ -331,6 +332,7 @@ div.fullscreen {
     flex-direction: column;
     justify-content: start;
     width: 100vw;
+    align-items: center;
 /*    max-height: 100vh;
 */}
 .photo-container {
@@ -360,4 +362,8 @@ div.fullscreen {
 
 .share-icon {
     height: 15px;
+}
+.save-code {
+    font-size: 1.1em;
+    font-weight: bold;
 }

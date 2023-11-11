@@ -6,7 +6,7 @@ namespace ButtsBlazor.Client.Utils;
 
 public class PromptOptions
 {
-    public int ImagesRecentForMinutes {get;set;} = 24*60;
+    public int ImagesRecentForMinutes {get;set;} = 24*60*7;
     public string GradioUri { get; set; } = "https://butts.infinitebutts.com";
     public int MaxFileSize { get; set; } = 1024 * 1024 * 40;
     public int HistoryLength { get; set; } = 100;
@@ -28,4 +28,5 @@ public class PromptOptions
     public int NumGeneratedImages { get; set; } = 1;
     public int DbLockTimeoutSeconds { get; set; } = 60 * 2;
     public TimeSpan DbLockTimeout => TimeSpan.FromSeconds(DbLockTimeoutSeconds);
+    public string ThumbnailPath { get; set; } = "thumbnails";
 }

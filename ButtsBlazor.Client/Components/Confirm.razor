@@ -85,9 +85,9 @@
 
             if (cts != null)
             {
-                if (!cts.IsCancellationRequested)
+                if (cts?.IsCancellationRequested == false)
                     await cts.CancelAsync();
-                cts.Dispose();
+                cts?.Dispose();
                 cts = null;
             }
             if (Result == null)

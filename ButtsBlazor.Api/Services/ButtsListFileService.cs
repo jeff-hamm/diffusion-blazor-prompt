@@ -162,7 +162,10 @@ public class ButtsListFileService
     }
 
     private ButtImage ForFile(FileInfo file, int index, bool isLatest) => new(
-        GetPath(file), file.CreationTimeUtc, index, isLatest);
+        GetPath(file), file.CreationTimeUtc, index, pathService.ThumbnailPath(GetPath(file)))
+    {
+        IsLatest = isLatest
+    };
 
     private WebPath GetPath(FileInfo file)
     {

@@ -12,6 +12,7 @@ using ButtsBlazor.Services;
 using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
 using static System.Net.Mime.MediaTypeNames;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -95,16 +96,16 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         }
     }
 
-    private async Task EnsureThumbnail(WebPath path)
+    private async Task<WebPath> EnsureThumbnail(WebPath path)
     {
-        var thumbWebPath = path.ToThumbnailPath();
+        var thumbWebPath = pathService.ThumbnailPath(path);
         if (thumbWebPath.FilePath is { Exists: false } thumbPath)
         {
             thumbPath.EnsureDirectory();
-            logger.LogInformation($"Resizing {path.Path} to {thumbPath}");
+            logger.LogInformation($"Resizing {path} to {thumbPath}");
             using var image = Image.Load<Rgb24>(path.FilePath);
-            int height = 300;
-            int width = 300;
+            int height = 400;
+            int width = 400;
             if (image.Width > image.Height)
                 height = 0;
             else
@@ -112,13 +113,15 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             image.Mutate(x => x.Resize(width, height));
             await image.SaveAsync(thumbPath);
         }
+
+        return thumbWebPath;
     }
 
     private readonly SemaphoreSlim recentLock = new (1);
     private const int LockTimeout = 1000;
     private Dictionary<ImageType, ButtImage[]>? recentList = null;
 
-    public async Task<IEnumerable<ButtImage>> GetLatestAndRandom(int maxLatestCount, int totalCount, ImageType imageType=ImageType.Output)
+    public async Task<IEnumerable<ButtImage>> GetLatestAndRandom(int maxLatestCount, int totalCount, ImageType imageType)
     {
         var paths = new List<ButtImage>();
         await foreach (var recent in GetLatest(maxLatestCount, imageType))
@@ -134,7 +137,13 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         {
             if (paths.Count >= totalCount)
                 return paths;
-            paths.Add(recent);
+            if (recent.ThumbnailPath == null)
+                paths.Add( recent with
+                {
+                    ThumbnailPath = await EnsureThumbnail(recent.Path)
+                });
+            else
+                paths.Add(recent);
         }
         //    paths.Count switch
         //{
@@ -165,7 +174,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
 
     }
 
-    public async IAsyncEnumerable<ButtImage> GetLatest(int count, ImageType type = ImageType.Camera)
+    public async IAsyncEnumerable<ButtImage> GetLatest(int count, ImageType type)
     {
             await using var db = await dbContextFactory.CreateDbContextAsync();
             var recentPaths = await RefreshRecent(db, type);
@@ -202,11 +211,14 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             await foreach (var item in db.Images.Where(i => i.Type == imageType)
                                .OrderBy(i => EF.Functions.Random())
                                .Select(i => 
-                                   new ButtImage(i.Path, i.CreationDate, i.RowId, false))
+                                   new ButtImage(i.Path, i.CreationDate, i.RowId,null))
                                .Take(50).AsAsyncEnumerable())
                 randomImages.Add(item);
             if(randomImages.TryTake(out path))
-                return path;
+                return path with
+                {
+                    ThumbnailPath = pathService.ThumbnailPath(path.Path)
+                };
             return null;
         }
         finally
@@ -220,7 +232,6 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
     [MemberNotNull("recentList")]
     internal async Task<ButtImage[]> RefreshRecent(ButtsDbContext db, ImageType imageType)
     {
-        int? newRowId = null;
         if (recentList != null && !hasChanges)
             return recentList.TryGetValue(imageType, out var val) ? val : Array.Empty<ButtImage>();
         //if (!await recentLock.WaitAsync(TimeSpan.FromSeconds(60)))
@@ -232,8 +243,10 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             recentList = await db.Images.Where(i => i.CreationDate > recentTime)
                 .GroupBy(i => i.Type)
                 .ToDictionaryAsync(g => g.Key, g => 
-                    g.OrderByDescending(i => i.RowId).Select(s =>
-                        new ButtImage(s.Path, s.CreationDate,s.RowId)).ToArray());
+                    g.OrderByDescending(i => i.RowId)
+                        .AsEnumerable()
+                        .Select(s =>
+                        new ButtImage(s.Path, s.CreationDate,s.RowId, pathService.ThumbnailPath(s.Path))).ToArray());
             return recentList.TryGetValue(imageType, out var val) ? val : Array.Empty<ButtImage>();
         }
         finally

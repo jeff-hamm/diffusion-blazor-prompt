@@ -75,7 +75,7 @@
         if (firstRender)
         {
             thisJsRef = DotNetObjectReference.Create(this);
-            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js?ver=7");
+            jsModule = await Js.InvokeAsync<IJSObjectReference>("import", "/js/listener.js?ver=8");
             docListenerJsRef = await Js.InvokeAsync<IJSObjectReference>("listener.addDocumentListener", thisJsRef, "keydown", nameof(KeyDown));
             if (Focus && fallbackDiv.HasValue)
                 await fallbackDiv.Value.FocusAsync();

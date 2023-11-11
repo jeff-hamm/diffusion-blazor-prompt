@@ -31,6 +31,12 @@ public class ImagePathService : IPathConverter
         WebPath(ImageDirectoryLookup(type), fileName);
     public WebPath Directory(ImageType type) =>
         WebPath(ImageDirectoryLookup(type));
+    public WebPath ThumbnailPath(WebPath path)
+    {
+
+        var filePath = Path.GetRelativePath(config.ImagePathRoot, path);
+        return WebPath(ImageDirectoryLookup(ImageType.Thumbnail), filePath);
+    }
 
     private string ImageDirectoryLookup(ImageType type) =>
         type switch
@@ -41,6 +47,7 @@ public class ImagePathService : IPathConverter
             ImageType.ControlNet => config.ControlNetPath,
             ImageType.Output => config.OutputPath,
             ImageType.Infinite => config.GeneratedPath,
+            ImageType.Thumbnail => config.ThumbnailPath,
             _ => throw new InvalidOperationException($"Unknown image type {type}")
         };
 

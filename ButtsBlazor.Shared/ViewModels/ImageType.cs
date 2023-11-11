@@ -7,5 +7,6 @@ public enum ImageType
     Output,
     Infinite,
     Camera,
-    Temp
+    Temp,
+    Thumbnail
 }

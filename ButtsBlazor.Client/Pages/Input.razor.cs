@@ -58,7 +58,7 @@ public partial class Input()
         IsLoading = true;
         StateHasChanged();
         grid?.Clear();
-        var entities = await ApiClient.GetRecentImages(NumImages, ImageType.Camera);
+        var entities = (await ApiClient.GetRecentImages(NumImages, ImageType.Camera)).ToArray();
         images = entities?.Length > 0 ? grid?.Place(entities) : Array.Empty<GridSquare>();
         IsLoading = false;
         StateHasChanged();

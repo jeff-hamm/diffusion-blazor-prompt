@@ -49,8 +49,8 @@ public class ButtsApiClient(IHttpClientFactory clientFactory, IOptions<PromptOpt
             content: fileContent,
             name: "\"file\"",
             fileName: name);
-        if (additionalFormData != null)
-            content.Add(new FormUrlEncodedContent(additionalFormData));
+        //if (additionalFormData != null)
+        //    content.Add(new FormUrlEncodedContent(additionalFormData));
 
         var response = await client.PostAsync("api/butts/upload", content);
         return await response.Content.ReadFromJsonAsync<UploadResult>() ??

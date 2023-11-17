@@ -120,7 +120,11 @@
                 Image, Prompt, "", generatorConfig, callback);
             HasGenerated = true;
             if (imageSrc?.Length > 0)
+            {
+                 code = random.Next().ToBase64StringNoPadding();
                 image = imageSrc[0];
+                await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
+            }
             else
                 HasError = true;
         }
@@ -158,6 +162,7 @@
 
     Random random = new Random();
     private CallbackHelper<GradioStatus?>? callbackHelper;
+    private string? code;
 
     private async Task ConfirmNext()
     {
@@ -169,15 +174,13 @@
     {
         if (imageSrc?.Length > 0)
         {
-            var code = random.Next().ToBase64StringNoPadding();
-            await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
             var dialog = await Page?.Confirm.Show(
                 $"This image will be displayed next! You can recover it later by entering the code <span class='save-code'>{code}</span>. Would you like to generate another with this prompt or start over?",
                 title + "?", "Start Over", "Do it Again!", timeout: 60);
             var r = await dialog.WaitForResult();
             if (r is ConfirmationResult.Timeout or ConfirmationResult.Confirm)
             {
-                Navigation.NavigateTo("/input");
+                Navigation.NavigateTo("/input", true);
             }
             else
             {

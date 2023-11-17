@@ -14,7 +14,8 @@
 @using ButtsBlazor.Shared.Services
 @inject FileService Files
 @inject PromptOptions Options
-<script src="/lib/fancybox.umd.js"></script>
+ <script src="/lib/fancybox.umd.js"></script>
+ 
 <link
     rel="stylesheet"
     href="/lib/fancybox.css"
@@ -57,26 +58,26 @@
         $('#output').text(message);
         oldLog.apply(this, arguments);
     }
-    $(document).ready(function () {
-        $('body').on('click', '.go_gridItem', function (e) {
+    // $(document).ready(function () {
+    //     $('body').on('click', '.go_gridItem', function (e) {
 
-            const $target = $(e.target);
-            const $shareButton = $(this);
-                const $img = $shareButton.find('img');
-            if (navigator.canShare) {
-                    navigator.share({
-                        title: $img.attr('alt'),
-                        text: $img.attr('alt'),
-                        url: $img.attr('src'),
-                    })
-                        .then(() => console.log('Successful share'))
-                        .catch((error) => console.log('Error sharing', error));
-                } else {
-                alert('Share not supported on this browser, do it the old way.')
-                    console.log('Share not supported on this browser, do it the old way.');
-                }
-        })
-    });
+    //         const $target = $(e.target);
+    //         const $shareButton = $(this);
+    //             const $img = $shareButton.find('img');
+    //         if (navigator.canShare) {
+    //                 navigator.share({
+    //                     title: $img.attr('alt'),
+    //                     text: $img.attr('alt'),
+    //                     url: $img.attr('src'),
+    //                 })
+    //                     .then(() => console.log('Successful share'))
+    //                     .catch((error) => console.log('Error sharing', error));
+    //             } else {
+    //             alert('Share not supported on this browser, do it the old way.')
+    //                 console.log('Share not supported on this browser, do it the old way.');
+    //             }
+    //     })
+    // });
     Fancybox.bind("[data-fancybox]", {
         // Your custom options
     });

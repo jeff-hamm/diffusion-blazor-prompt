@@ -20,7 +20,6 @@ namespace ButtsBlazor.Server.Controllers
     public class ButtsController(ButtsListFileService legacyFileService, FileService fileService,
         ILogger<ButtsController> logger, IOptionsSnapshot<PromptOptions> options, IHubContext<NotifyHub> hub) : ControllerBase
     {
-
         [HttpGet("")]
         public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except)
         {

@@ -56,7 +56,7 @@ public class OutputModel : PageModel
 
     public int Rows { get; set; } = 4;
 
-    public int NumImages { get; set; } = 24;
+    public int NumImages { get; set; } = 30;
     public List<ButtImage>? images;
     private ImageGrid? grid;
 
@@ -69,7 +69,7 @@ public class OutputModel : PageModel
             images.Add(image);
         await foreach (var image in fileService.GetLatest(NumImages, ImageType.Camera))
             images.Add(image);
-        images.Sort((one,two) => one.Created.CompareTo(two.Created));
+        images.Sort((one,two) => two.Created.CompareTo(one.Created));
         IsLoading = false;
     }
 

@@ -47,6 +47,8 @@
     public string? Image { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Prompt { get; set; }
+    [Parameter, SupplyParameterFromQuery]
+    public string? Source { get; set; }
     public bool HasError { get; set; }
 
     private void NavigateBack()
@@ -180,11 +182,17 @@
             var r = await dialog.WaitForResult();
             if (r is ConfirmationResult.Timeout or ConfirmationResult.Confirm)
             {
-                Navigation.NavigateTo("/input", true);
+                if (Source == "camera")
+                    Navigation.NavigateTo("/camera", true);
+                else
+                    Navigation.NavigateTo("/input", true);
             }
             else
             {
-                await Reload();
+                if (Source == "camera")
+                    Navigation.NavigateTo("/prompt?source=camera&image=" + Image, true);
+                else
+                    await Reload();
             }
                 
         }

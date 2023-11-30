@@ -44,7 +44,7 @@ function onFormSubmit(e) {
     var formData = new FormData(this);
     $.ajax({
         type: "POST",
-        url: "/ipad",
+        url: "/camera",
         data: formData,
         cache: false,
         contentType: false,
@@ -76,16 +76,16 @@ let options = {
 function rotateRatio() {
     if (isRotated) {
         isRotated = false;
-        options.aspectRatio = 2 / 3;
+//        options.aspectRatio = 2 / 3;
     }
     else {
         isRotated = true;
-        options.aspectRatio = 3 / 2;
+  //      options.aspectRatio = 3 / 2;
     }
 }
 function onImageSelected(image) {
     const imageEl = image.addClass('cropper-hidden')[0];
-    options.aspectRatio = 2 / 3;
+//    options.aspectRatio = 2 / 3;
     isRotated = false;
     if (imageEl.naturalWidth < imageEl.naturalHeight) {
         rotateRatio();

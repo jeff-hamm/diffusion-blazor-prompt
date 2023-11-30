@@ -19,7 +19,7 @@ namespace ButtsBlazor.Server.Pages
         public ActionResult OnGet(string? pageName)
         {
             if (Request.Headers.UserAgent.ToString().Contains("Mozilla/5.0 (IPad; CPU OS 10_3_3 like Mac OS X)"))
-                return RedirectToPage("./ipad");
+                return RedirectToPage("./camera");
 
 
             PageName = pageName?.ToLower() ?? "";

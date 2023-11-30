@@ -11,14 +11,15 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace ButtsBlazor.Server.Pages
 {
-    public class IpadModel : PageModel
+    public class CameraModel : PageModel
     {
-        private readonly ILogger<IpadModel> logger;
+        private readonly ILogger<CameraModel> logger;
         private readonly PromptOptions options;
         private readonly FileService fileService;
         private readonly IHubContext<NotifyHub> hub;
+        public UploadResult? uploadResult;
 
-        public IpadModel(ILogger<IpadModel> logger, PromptOptions options, FileService fileService,
+        public CameraModel(ILogger<CameraModel> logger, PromptOptions options, FileService fileService,
             IHubContext<NotifyHub> hub)
         {
             this.logger = logger;
@@ -35,7 +36,7 @@ namespace ButtsBlazor.Server.Pages
         {
             if (file == null) return Page();
             var it = ImageType.Camera;
-            var uploadResult = new UploadResult();
+            uploadResult = new UploadResult();
             var untrustedFileName = file.FileName;
             var displayFileName =
                 WebUtility.HtmlEncode(untrustedFileName);
@@ -63,6 +64,10 @@ namespace ButtsBlazor.Server.Pages
                     logger.LogInformation("{FileName} saved at {Path} with {Hash}",
                         displayFileName, saveFileResult.Path, uploadResult.Hash);
                     await hub.Clients.NewCameraImage(saveFileResult);
+                    return new JsonResult(new
+                    {
+                        location= "/prompt?image=" + saveFileResult.Path + "&source=camera"
+                    });
                 }
                 catch (IOException ex)
                 {
@@ -70,7 +75,6 @@ namespace ButtsBlazor.Server.Pages
                         displayFileName, ex.Message);
                     uploadResult.Error = $"{displayFileName} error on upload (Err: 3): {ex.Message}";
                 }
-
             }
 
             return Page();

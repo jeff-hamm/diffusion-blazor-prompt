@@ -37,11 +37,13 @@
     public string? Image { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Code { get; set; }
+    [Parameter, SupplyParameterFromQuery]
+    public string? Source { get; set; }
     public RootPageControls Page { get; set; } = null!;
 
     private Task Select(string prompt)
     {
-        Navigation.NavigateTo($"/generate?image={Image}&prompt={prompt.Replace("&nbsp;"," ")}&code={Code}");
+        Navigation.NavigateTo($"/generate?image={Image}&prompt={prompt.Replace("&nbsp;"," ")}&code={Code}&source={Source}");
         return Task.CompletedTask;
     }
     public int SelectedIndex { get; set; }

@@ -23,6 +23,8 @@ namespace ButtsBlazor.Server.Controllers
         [HttpGet("")]
         public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except)
         {
+            if(known == null)
+                known = DateTime.Now;
             bool isMostRecent = true;
             await foreach (var path in fileService.GetLatest(2, ImageType.Output))
             {

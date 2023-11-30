@@ -9,6 +9,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -108,15 +109,15 @@
   <ItemGroup>
     <ProjectReference Include="..\ButtsBlazor.Api\ButtsBlazor.Api.csproj" />
     <ProjectReference Include="..\ButtsBlazor.Client\ButtsBlazor.Client.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0-rc.2.23480.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0-rc.2.23480.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0-rc.2.23480.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0-rc.2.23480.1">
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0-rc.2.23480.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0-rc.2.23479.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
   </ItemGroup>

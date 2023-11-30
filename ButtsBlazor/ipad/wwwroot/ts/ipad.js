@@ -45,7 +45,7 @@ function onFormSubmit(e) {
     var formData = new FormData(this);
     $.ajax({
         type: "POST",
-        url: "/ipad",
+        url: "/camera",
         data: formData,
         cache: false,
         contentType: false,

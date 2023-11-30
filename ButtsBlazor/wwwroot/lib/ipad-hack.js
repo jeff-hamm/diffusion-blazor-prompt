@@ -45,12 +45,16 @@ function onFormSubmit(e) {
     $photoForm.removeClass('loaded');
     $.ajax({    
         type: "POST",
-        url: "/ipad",
+        url: "/camera",
         data: formData,
         cache: false,
         contentType: false,
         processData: false
-    }).then(function () {
+    }).then(function (data) {
+        if (data?.location) {
+            window.location.href = data.location;
+            return;
+        }
         clear();
         $cameraInput.click();
     }).fail(function () {
@@ -63,7 +67,7 @@ function onFormSubmit(e) {
 let isRotated = false;
 let cropper;
 let options = {
-    aspectRatio: 2 / 3,
+//    aspectRatio: 2 / 3,
     viewMode: 3,
     crop: function (e) { onCrop(e); },
     dragMode: 'move',
@@ -79,16 +83,16 @@ let options = {
 function rotateRatio() {
     if (isRotated) {
         isRotated = false;
-        options.aspectRatio = 2 / 3;
+//        options.aspectRatio = 2 / 3;
     }
     else {
         isRotated = true;
-        options.aspectRatio = 3 / 2;
+//        options.aspectRatio = 3 / 2;
     }
 }
 function onImageSelected(image) {
     const imageEl = image.addClass('cropper-hidden')[0];
-    options.aspectRatio = 2 / 3;
+//    options.aspectRatio = 2 / 3;
     isRotated = false;
     if (imageEl.naturalWidth < imageEl.naturalHeight) {
         rotateRatio();

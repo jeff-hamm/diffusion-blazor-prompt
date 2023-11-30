@@ -6,7 +6,10 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.100-rc.2 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+RUN dotnet workload install wasm-tools
+RUN apt-get update -y && \
+    apt-get install -y python3 libatomic1
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["./ButtsBlazor/ButtsBlazor.Server.csproj", "ButtsBlazor/"]

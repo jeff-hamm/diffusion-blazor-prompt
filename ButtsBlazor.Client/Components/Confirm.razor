@@ -115,6 +115,12 @@
         }
     }
 
+    public void Hide()
+    {
+        IsVisible = false;
+        StateHasChanged();
+
+    }
     ShowConfirmationResult? activeDialog;
     public async Task<ShowConfirmationResult> Show(string? message = null, string? title = null, string confirmText = "Yes", string cancelText = "No", int? timeout = null)
     {

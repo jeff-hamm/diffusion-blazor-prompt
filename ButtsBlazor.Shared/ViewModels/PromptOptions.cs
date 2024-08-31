@@ -12,8 +12,8 @@ public class PromptOptions
     public int HistoryLength { get; set; } = 100;
     public string ControlNetPath { get; set; } = "control";
     public string TempUploadsPath { get; set; } = "temp_uploads";
-    public string[] SupportedImageExtensions { get; set; } = new[] { ".png", ".jpg", ".tiff", ".jpeg" };
-    public string ImagePathRoot { get; set; } = "butts_images";
+    public string[] SupportedImageExtensions { get; set; } = new[] { ".png", ".jpg", ".tiff", ".jpeg", ".webp" };
+    public string ImagePathRoot(string tenant) => $"{tenant}_images";
     public string UserUploadsPath { get; set; } = "user_uploads";
     public string OutputPath { get; set; } = "prompted";
     public string GeneratedPath { get; set; } = "generated";

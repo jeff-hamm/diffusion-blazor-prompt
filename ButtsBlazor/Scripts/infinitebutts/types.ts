@@ -19,6 +19,7 @@ export type RequestButtsMessage = {
     request: "request-butts";
     url?: string;
     data: number;
+    type?: string;
 }
 export type ConsumedButtsMessage = {
     request: "consume-butts";

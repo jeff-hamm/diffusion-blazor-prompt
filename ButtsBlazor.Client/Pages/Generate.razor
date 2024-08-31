@@ -3,8 +3,8 @@
 @using ButtsBlazor.Client.Services
 @using ButtsBlazor.Shared.Services
 @using ButtsBlazor.Shared.ViewModels
+@using System.Text.RegularExpressions
 @rendermode InteractiveWebAssembly
-@inject IButtsApiClient Client
 @inject NavigationManager Navigation
 @inject PromptOptions Options
 @inject IJSRuntime JsRuntime;
@@ -24,126 +24,35 @@
 </div>
 
 <section @onclick="OnClick">
-    <RootPageControls @ref="Page" ReloadRequested="Reload" NavigateBack="NavigateBack" ButtonPress="OnButtonPress" DefaultButtonHandlers="@(!HasGenerated)"> </RootPageControls>
+    <RootPageControls @ref="Page" ReloadRequested="Reload" NavigateBack="NavigateBack" ButtonPress="OnButtonPress" DefaultButtonHandlers="@(_generateRef?.HasGenerated != true)"> </RootPageControls>
     <CascadingValue Value="Page">
-        <FullscreenImage Title="@Prompt" Image="@image" SrcImage="@Image">
-            @if (HasError)
-            {
-                <span class="text-danger">Error Generating Image. Trying again...</span>
-            }
-        </FullscreenImage>
-        @if (StatusMessage != null)
-        {
-            <span class="status-message">@StatusMessage</span>
-        }
+	    <AiGenerate  GradioUri="@Options.GradioUri" ImagesGenerated="OnImagesGenerated" Image="@Image" Prompt="@Prompt" Tenant="@Source" NumGeneratedImages="@Options.NumGeneratedImages" @ref="_generateRef">
 
+	    </AiGenerate>
     </CascadingValue>
 
 </section>
 
 @code {
-    public bool HasGenerated { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Image { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Prompt { get; set; }
     [Parameter, SupplyParameterFromQuery]
     public string? Source { get; set; }
-    public bool HasError { get; set; }
-
+    private AiGenerate? _generateRef;
     private void NavigateBack()
     {
         Navigation.NavigateTo("/prompt?image=" + Image);
     }
 
-
-    private string GeneratingText { get; set; } = "";
-
-    private string[]? imageSrc;
-    private string? image;
-    protected override void OnInitialized()
+    private Task Reload()
     {
-        base.OnInitialized();
-        callbackHelper = new CallbackHelper<GradioStatus?>(StatusUpdate);
+        if (_generateRef == null)
+            return Task.CompletedTask;
+        return _generateRef.Reload();
     }
 
-    private string? StatusMessage { get; set; }
-    private IJSObjectReference? _promptModule;
-    protected override async Task OnParametersSetAsync()
-    {
-        await base.OnParametersSetAsync();
-        generatorConfig = new GeneratorPromptConfig()
-        {
-            NumOutputs = Options.NumGeneratedImages
-        };
-        StatusMessage = null;
-    }
-
-    private GeneratorPromptConfig? generatorConfig;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            await Reload();
-    }
-
-    private async Task StatusUpdate(GradioStatus? status)
-    {
-        await InvokeAsync(() =>
-        {
-            StatusMessage = status?.Message ?? "";
-            if (status?.progress_data is {} p)
-                StatusMessage += $"{p.Desc} [{p.Progress}/{p.Length}]";
-
-            StateHasChanged();
-        });
-    }
-    private async Task Reload()
-    {
-        if (IsGenerating) return;
-        HasGenerated = false;
-        IsGenerating = true;
-        HasError = false;
-        GeneratingText = $"Generating {Prompt}";
-        StateHasChanged();
-        try
-        {
-
-            if (_promptModule != null)
-                await _promptModule.DisposeAsync();
-            _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/generate.js");
-            await JsRuntime.InvokeVoidAsync("generate.configure",
-                Options.GradioUri, null);
-            var callback = 
-                callbackHelper != null ?
-                    DotNetObjectReference.Create(callbackHelper) : null;
-
-            imageSrc = await JsRuntime.InvokeAsync<string[]>("generate.generate",
-                Image, Prompt, "", generatorConfig, callback);
-            HasGenerated = true;
-            if (imageSrc?.Length > 0)
-            {
-                 code = random.Next().ToBase64StringNoPadding();
-                image = imageSrc[0];
-                await Client.UploadFile(imageSrc[0], Prompt!, image!, code);
-            }
-            else
-                HasError = true;
-        }
-        catch (Exception ex)
-        {
-            HasError = true;
-            Console.WriteLine("Error {0}, {1}", ex.Message, ex);
-            StatusMessage = ex.Message;
-
-        }
-        finally
-        {
-            IsGenerating = false;
-            StateHasChanged();
-        }
-    }
-    public bool IsGenerating { get; set; }
     private async Task OnButtonPress(GamepadButton obj)
     {
 
@@ -151,7 +60,7 @@
         {
             case GamepadButton.Select:
                 await PromptSave("Reloading");
-//                await Reload();
+                //                await Reload();
                 break;
             case GamepadButton.Start:
             case GamepadButton.Primary:
@@ -162,9 +71,6 @@
 
     }
 
-    Random random = new Random();
-    private CallbackHelper<GradioStatus?>? callbackHelper;
-    private string? code;
 
     private async Task ConfirmNext()
     {
@@ -172,13 +78,33 @@
         await PromptSave("Butts Complete!");
     }
 
+    private AiGenerate.GeneratedImage[]? generatedImages;
+    private AiGenerate.GeneratedImage? lastGeneratedImage;
+    private void OnImagesGenerated(AiGenerate.GeneratedImage[] generated)
+    {
+	    generatedImages = generated;
+	    lastGeneratedImage = generated.Length > 0 ? generated[0] : null;
+        StateHasChanged();
+    }
+
     private async Task PromptSave(string title)
     {
-        if (imageSrc?.Length > 0)
+        if (generatedImages?.Length > 0)
         {
-            var dialog = await Page?.Confirm.Show(
-                $"This image will be displayed next! You can recover it later by entering the code <span class='save-code'>{code}</span>. Would you like to generate another with this prompt or start over?",
-                title + "?", "Start Over", "Do it Again!", timeout: 60);
+            Confirm.ShowConfirmationResult dialog;
+            if (Source == "camera")
+            {
+                dialog = await Page?.Confirm.Show(
+                    $"This image will be displayed next! You can recover it later by entering the code <span class='save-code'>{lastGeneratedImage?.ImageId}</span>. Would you like to generate another with this prompt or start over?",
+                    title + "?", "Start Over", "Do it again!", timeout: 60);
+
+            }
+            else
+            {
+                dialog = await Page?.Confirm.Show(
+                    $"Would you like to print this image or start over?",
+                    title + "?", "Start Over", "Print it!", timeout: 60);
+            }
             var r = await dialog.WaitForResult();
             if (r is ConfirmationResult.Timeout or ConfirmationResult.Confirm)
             {
@@ -192,7 +118,17 @@
                 if (Source == "camera")
                     Navigation.NavigateTo("/prompt?source=camera&image=" + Image, true);
                 else
-                    await Reload();
+                {
+                    if (Page?.Confirm != null)
+                    {
+                        Page.Confirm.Hide();
+                    }
+                    await JsRuntime.InvokeVoidAsync("window.print");
+                    Navigation.NavigateTo("/input", true);
+                    //                    await PromptSave(title);
+                    //await Reload();
+                    return;
+                }
             }
                 
         }
@@ -201,14 +137,11 @@
 
     public RootPageControls? Page { get; set; }
 
-
     private async Task OnClick()
     {
-        if (IsGenerating)
+        if (_generateRef == null || _generateRef.IsGenerating)
             return;
         await ConfirmNext();
     }
-
-
 
 }

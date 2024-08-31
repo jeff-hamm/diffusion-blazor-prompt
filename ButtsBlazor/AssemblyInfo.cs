@@ -1,8 +1,0 @@
-﻿[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("4af0d564-7a0f-4be3-9d69-5546e3105ed1")]
-[assembly: System.Reflection.AssemblyCompanyAttribute("ButtsBlazor.Server")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
-[assembly: System.Reflection.AssemblyProductAttribute("ButtsBlazor.Server")]
-[assembly: System.Reflection.AssemblyTitleAttribute("ButtsBlazor.Server")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

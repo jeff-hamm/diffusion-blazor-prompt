@@ -5,7 +5,7 @@
 @implements IAsyncDisposable
 @implements IButtonPressListener
 
-@if (Options != null)
+@if (Options != null && !IsPreselected)
 {
     @if (!String.IsNullOrEmpty(Options.Prefix))
     {
@@ -15,7 +15,7 @@
     {
         @if (IsPreselected)
         {
-            <div class="slot-text static choice">@((MarkupString)Choice)</div>
+             <div class="slot-text static choice">@((MarkupString)Choice)</div>
         }
         else
         {

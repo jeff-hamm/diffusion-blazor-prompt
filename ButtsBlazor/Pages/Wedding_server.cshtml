@@ -1,0 +1,11 @@
+﻿@page "/wedding_server"
+@{
+	Layout = "Shared/_BlazorFrameLayout";
+}
+@model ButtsBlazor.Server.Pages.WeddingModel
+@using ButtsBlazor.Client
+@using ButtsBlazor.Client.Components
+@using ButtsBlazor.Client.Utils
+@using Microsoft.AspNetCore.Http.Extensions
+@inject PromptOptions Options
+<component type="typeof(AiGenerate)" param-GradioUri="@Options.GradioUri" render-mode="WebAssemblyPrerendered"  param-Image="@Model.Image" param-Prompt="@Model.Prompt" param-Tenant="@Model.Tenant" />

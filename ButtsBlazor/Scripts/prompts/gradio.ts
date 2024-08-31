@@ -1,6 +1,16 @@
-﻿import { client, SpaceStatus } from "@gradio/client";
-import { Status, Payload, LogMessage } from "@gradio/client/src/types";
+﻿
+import {Client} from "@gradio/client";
+import { Status, SpaceStatusCallback, PayloadMessage, Config } from "@gradio/client/src/types";
 import { DotNet } from "@microsoft/dotnet-js-interop";
+declare global {
+	interface Window {
+		__gradio_mode__: "app" | "website";
+		gradio_config: Config;
+		__is_colab__: boolean;
+		__gradio_space__: string | null;
+		gradio_api_info:any
+	}
+}
 
 export interface CannyConfig {
 	controlImgSize?: number,
@@ -20,7 +30,7 @@ export interface PromptConfig {
 	cannyConfig: CannyConfig
 }
 
-type SpaceStatusCallback = (status: SpaceStatus) => void;
+//type SpaceStatusCallback = (status: SpaceStatus) => void;
 export interface ClientConfig {
 	uriBase: string,
 	hfToken?: string
@@ -35,9 +45,11 @@ export function configure(uriBase: string, hfToken?:string) {
 }
 
 async function getClient(statusCallback?:SpaceStatusCallback) {
-	return await client(clientConfig.uriBase, {
+	statusCallback ??= ((ss) => console.debug(ss));
+	return await Client.connect(clientConfig.uriBase, {
 		hf_token: `hf_${clientConfig.hfToken}`,
-		status_callback: statusCallback
+		status_callback: statusCallback,
+		events: ["status", "data", "log"]
 	});
 }
 
@@ -58,7 +70,7 @@ export async function generateCanny(srcImage: string | Blob, data: CannyConfig, 
 	const result = await run<Blob>("/generate_canny", args,callbackObj);
 
 	console.log(result);
-	return result.data[0];
+	return <Blob>result.data[0];
 }
 
 function toArgs(data: CannyConfig) : any[] {
@@ -96,7 +108,6 @@ export async function saveConfig(data: PromptConfig) {
 //	event_data: unknown
 //}
 export async function resetConfig(uriBase: string) {
-	const app = await getClient();
 	const result = await run<any>("/reset_config", []);
 
 	console.log(result);
@@ -116,8 +127,8 @@ function disposeStatusCallback(callbackObj?: DotNet.DotNetObject | StatusCallbac
 }
 export async function generate(srcImage: string, prompt: string, negative: string, data: PromptConfig, callbackObj?: DotNet.DotNetObject | StatusCallback) {
 	try {
-		const canny = await generateCanny(srcImage, data?.cannyConfig, callbackObj);
-		return await generatePromptImage(<Blob><any>canny, prompt, negative, data, callbackObj);
+//		const canny = await generateCanny(srcImage, data?.cannyConfig, callbackObj);
+		return await generatePromptImage(<Blob><any>srcImage, prompt, negative, data, callbackObj);
 	}
 	finally {
 		disposeStatusCallback(callbackObj);
@@ -132,89 +143,80 @@ export async function generatePromptImage(cannyImage: string | Blob, prompt: str
 			negative, // string  in 'Negative Prompt' Textbox component		
 			data?.numOutputs ?? 2,
 			data?.imgSize ?? 1024, // number  in 'Image Size' Number component		
-			data?.numSteps ?? 40, // number  in 'Num. Steps' Number component		
+			data?.numSteps ?? 20, // number  in 'Num. Steps' Number component		
 			data?.controlScale ?? 0.45, // number  in 'Control Scale' Number component
 		],callbackObj);
 		console.log(result);
-		return result.data;
+		return <string[]>result.data;
 	}
 	catch(e) {
 		console.error(e);
 	}
 }
-type SubmitEvent = { type: string; endpoint: string; fn_index: number };
-export interface PayloadResponse<T> {
-	data: T[];
-	fn_index?: number;
-	event_data?: unknown;
-	time?: Date;
-}
-
-type StatusEvent = Status & SubmitEvent;
-type DataEvent<T> = PayloadResponse<T> & SubmitEvent;
-type LogEvent = LogMessage & SubmitEvent;
 type StatusCallback = (d: Status) => void;
 async function run<T>(
 	endpoint: string,
 	data: unknown[],
 	callbackObj?: DotNet.DotNetObject | StatusCallback,
-	event_data?: unknown): Promise<PayloadResponse<T>> {
-	const client = await getClient();
+	event_data?: unknown): Promise<PayloadMessage> {
+	const connection = await getClient();
 	let data_returned = false;
 	let status_complete = false;
 	let error_sent = false;
-	return new Promise((res, rej) => {
-		let app;
-		let status_callback = toStatusCallback(callbackObj);
+	let status_callback = toStatusCallback(callbackObj);
+	const result1 = await connection.predict(endpoint,data,event_data);
+	const submission = await connection.submit(endpoint, data, event_data);
+	let result: PayloadMessage;
+	for await (const msg of submission) {
 		try {
-			app = client.submit(endpoint, data, event_data);
-			let result: PayloadResponse<T>;
-			app.on("data", (d: DataEvent<T>) => {
-				// if complete message comes before data, resolve here
+			if (msg.type === "data") {
 				if (status_complete) {
-					app.destroy();
+					submission.cancel();
 					disposeStatusCallback(status_callback);
 					status_callback = null;
-					res(d);
 				}
 				data_returned = true;
-				result = d;
-			})
-				.on("status", (status: Status) => {
-					if (status_callback) {
-						status_callback(status);
+				return msg;
+			}
+			if(msg.type == "status") {
+				const message = `${msg.time}: ${msg.stage} - ${msg.message}`
+				console.debug(message,msg);	
+				if (status_callback) {
+						status_callback(msg);
 					}
-					if (status.stage === "error") {
+					if (msg.stage === "error") {
 						error_sent = true;
 						disposeStatusCallback(status_callback);
 						status_callback = null;
-						rej(status);
+						throw message;
 					}
-					if (status.stage === "complete") {
+					if (msg.stage === "complete") {
 						status_complete = true;
 						// if complete message comes after data, resolve here
 						if (data_returned) {
-							app.destroy();
+							//submission.cancel();
 							disposeStatusCallback(status_callback);
 							status_callback = null;
-							res(result);
+							return result;
 						}
 					}
-				});
+					}
+			if(msg.type == "log") {
+				console.debug(msg.log,msg)
+				}
 		}
 		catch (e) {
-			if (app && data_returned) {
-				app.destroy();
+			if (submission && data_returned) {
+//				app.destroy();
 				disposeStatusCallback(status_callback);
 				status_callback = null;
 			}
 			if (!data_returned && !status_complete && !error_sent)
-				rej(e);
+				throw e;
 		}
-	});
+	}
 
 }
-
 export default {
 	configure,
 	generateCanny,
@@ -223,4 +225,6 @@ export default {
 	resetConfig,
 	saveConfig,
 	toBlob
-}
+};
+//(<any>window).gr=generateObj;
+//export default generateObj

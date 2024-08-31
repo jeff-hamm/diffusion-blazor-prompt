@@ -1,0 +1,167 @@
+﻿@using System.Text.RegularExpressions
+@using ButtsBlazor.Client.Services
+@using ButtsBlazor.Shared.Services
+@using Microsoft.Extensions.Options
+@inject IJSRuntime JsRuntime;
+@inject IButtsApiClient Client
+
+<FullscreenImage Title="@displayPrompt" Image="@CurrentImage?.Image" SrcImage="@Image">
+    @if (HasError)
+    {
+        <span class="text-danger">Error Generating Image. Trying again...</span>
+    }
+</FullscreenImage>
+@if (StatusMessage != null)
+{
+    <span class="status-message">@StatusMessage</span>
+}
+
+@code {
+    [Parameter]
+    public string? Image { get; set; }
+    [Parameter]
+    public string? Prompt { get; set; }
+    [Parameter]
+    public string? Tenant { get; set; }
+    [Parameter] public int NumGeneratedImages { get; set; } = 1;
+    [Parameter]
+    public string GradioUri { get; set; } = "https://butts.infinitebutts.com";
+
+    [Parameter] public EventCallback<(string? image, string prompt)> GenerateStarting { get; set; }
+    [Parameter] public EventCallback<GeneratedImage[]?> ImagesGenerated { get; set; }
+    [Parameter] public EventCallback<GeneratedImage> UploadStarting { get; set; }
+    [Parameter] public EventCallback<GeneratedImage> UploadSuccess { get; set; }
+    [Parameter] public EventCallback<(string message, Exception? innerException)> GenerateFailed { get; set; }
+    [Parameter] public EventCallback<(string? image, string prompt)> GenerateComplete { get; set; }
+    public bool IsGenerating { get; set; }
+    public bool HasGenerated { get; set; }
+    public bool HasError { get; set; }
+    public GeneratedImage[]? GeneratedImages { get; private set; }
+    public GeneratedImage? CurrentImage { get; set; }
+    private string? image;
+    private string? displayPrompt;
+    private string rawPrompt = "";
+    private static readonly Regex hidden = new Regex(@"__[^_]+__", RegexOptions.Compiled);
+    private CallbackHelper<GradioStatus?>? callbackHelper;
+    private GeneratorPromptConfig? generatorConfig;
+    private string? StatusMessage { get; set; }
+    private string GeneratingText { get; set; } = "";
+    private Random random = new ();
+    private IJSObjectReference? _promptModule;
+
+    public record class GeneratedImage(string Image, string ImageId)
+    {
+        public bool IsUploaded { get; internal set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        callbackHelper = new CallbackHelper<GradioStatus?>(StatusUpdate);
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        generatorConfig = new GeneratorPromptConfig()
+            {
+                NumOutputs = NumGeneratedImages,
+                NumSteps = 20,
+                ControlScale = 1,
+                ImgSize = 1024
+            };
+        StatusMessage = null;
+        if (Prompt != null)
+        {
+            displayPrompt = hidden.Replace(Prompt, "");
+            rawPrompt = Prompt.Replace("__", " ");
+        }
+        else
+        {
+            displayPrompt = "";
+            rawPrompt = "";
+        }
+    }
+
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await Reload();
+    }
+
+
+
+    private async Task StatusUpdate(GradioStatus? status)
+    {
+        await InvokeAsync(() =>
+        {
+            StatusMessage = status?.Message ?? "";
+            if (status?.progress_data is { } p)
+                StatusMessage += $"{p.Desc} [{p.Progress}/{p.Length}]";
+
+            StateHasChanged();
+        });
+    }
+
+    private record GradioData(string Path, string Url);
+    public async Task Reload()
+    {
+	    if (IsGenerating) return;
+	    HasGenerated = false;
+	    IsGenerating = true;
+	    HasError = false;
+	    GeneratingText = $"Generating {Prompt}";
+	    StateHasChanged();
+        await GenerateStarting.InvokeAsync((Image, rawPrompt));
+	    try
+	    {
+
+		    if (_promptModule != null)
+			    await _promptModule.DisposeAsync();
+		    _promptModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/gradio.js?ver=1");
+		    await JsRuntime.InvokeVoidAsync("gradio.configure", GradioUri, null);
+		    var callback = 
+			    callbackHelper != null ?
+				    DotNetObjectReference.Create(callbackHelper) : null;
+		    GeneratedImages= null;
+		    CurrentImage = null;
+            var imageSrc = await JsRuntime.InvokeAsync<GradioData[]>("gradio.generate",
+			    Image, Prompt, "", generatorConfig, callback);
+		    HasGenerated = true;
+		    if (!(imageSrc?.Length > 0))
+		    {
+			    HasError = true;
+			    await GenerateFailed.InvokeAsync(("No images returned from generate", null));
+			    return;
+		    }
+		    GeneratedImages = imageSrc.Select(img => 
+			    new GeneratedImage(img.Url,random.Next().ToBase64StringNoPadding())).ToArray();
+            await ImagesGenerated.InvokeAsync(GeneratedImages);
+            CurrentImage = GeneratedImages[0];
+            StateHasChanged();
+            foreach (var img in GeneratedImages)
+            {
+                await UploadStarting.InvokeAsync(img);
+                await Client.UploadFile(img.Image, Prompt!, Image!, img.ImageId);
+                img.IsUploaded = true;
+                await UploadSuccess.InvokeAsync(img);
+            }
+	    }
+	    catch (Exception ex)
+	    {
+		    HasError = true;
+		    Console.WriteLine("Error {0}, {1}", ex.Message, ex);
+		    StatusMessage = ex.Message;
+            await GenerateFailed.InvokeAsync((ex.Message, ex));
+
+	    }
+	    finally
+	    {
+		    IsGenerating = false;
+		    StateHasChanged();
+		    await GenerateComplete.InvokeAsync();
+
+	    }
+    }
+}

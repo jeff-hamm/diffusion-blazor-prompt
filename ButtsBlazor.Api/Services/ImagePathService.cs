@@ -22,19 +22,19 @@ public class ImagePathService : IPathConverter
     public WebPath ToWebPath(FilePath path) =>
         new (Path.GetRelativePath(env.WebRootPath, path).Replace('\\', '/'));
 
-    public WebPath WebPath(string directory) =>
-        new(Path.Combine(config.ImagePathRoot, directory));
-    public WebPath WebPath(string directory, string path) =>
-        new (Path.Combine(config.ImagePathRoot,directory, path));
+    public WebPath WebPath(string directory, string tenant) =>
+        new(Path.Combine(config.ImagePathRoot(tenant), directory));
+    public WebPath WebPath(string directory, string path, string tenant) =>
+        new (Path.Combine(config.ImagePathRoot(tenant),directory, path));
 
-    public WebPath Image(ImageType type, string fileName) =>
-        WebPath(ImageDirectoryLookup(type), fileName);
-    public WebPath Directory(ImageType type) =>
-        WebPath(ImageDirectoryLookup(type));
-    public WebPath ThumbnailPath(WebPath path)
+    public WebPath Image(ImageType type, string fileName, string tenant="butts") =>
+        WebPath(ImageDirectoryLookup(type), fileName,tenant);
+    public WebPath Directory(ImageType type, string tenant="butts") =>
+        WebPath(ImageDirectoryLookup(type), tenant);
+    public WebPath ThumbnailPath(WebPath path, string tenant="butts")
     {
 
-        var filePath = Path.GetRelativePath(config.ImagePathRoot, path);
+        var filePath = Path.GetRelativePath(config.ImagePathRoot(tenant), path);
         return WebPath(ImageDirectoryLookup(ImageType.Thumbnail), filePath);
     }
 

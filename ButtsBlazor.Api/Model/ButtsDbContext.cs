@@ -40,8 +40,10 @@ public class ButtsDbContext: DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.BuildSettingEntityModel();
-        modelBuilder.Entity<ImageEntity>().HasKey(x => x.RowId);
+        modelBuilder.Entity<ImageMetadata>().HasKey(x => x.RowId);
         modelBuilder.Entity<ImageEntity>().Property(x => x.RowId).ValueGeneratedOnAdd();
+        modelBuilder.Entity<ImageMetadata>().HasKey(x => x.RowId);
+        modelBuilder.Entity<ImageMetadata>().Property(x => x.RowId).ValueGeneratedOnAdd();
         modelBuilder.Entity<PromptArgs>().HasKey(x => x.RowId);
         modelBuilder.Entity<PromptArgs>().Property(x => x.RowId).ValueGeneratedOnAdd();
         modelBuilder.Entity<PromptEntity>().HasKey(x => x.RowId);
@@ -50,7 +52,7 @@ public class ButtsDbContext: DbContext
         modelBuilder.Entity<ImageEntity>().HasIndex(e => e.Path).IsUnique();
         base.OnModelCreating(modelBuilder);
     }
-    public const string DefaultDbPath = "db/butts.db";
+    public const string DefaultDbPath = "db/wedding.db";
 
     public static readonly string DefaultConnectionString = $"Data Source={DefaultDbPath}";
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

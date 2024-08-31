@@ -8,16 +8,24 @@ using ButtsBlazor.Client.Utils;
 
 namespace ButtsBlazor.Client.Services;
 
-public class PromptGenerationService(Random random, PromptOptions promptOptions)
+public interface IPromptGenerationService
+{
+    PromptChoiceBuilder GetPromptBuilder();
+    IEnumerable<PromptChoice> Choices(PromptChoiceBuilder prompt);
+    Func<int?, IEnumerable<string>> Choices(PromptPart part);
+
+}
+
+public class LegacyPromptGenerationService(Random random, PromptOptions promptOptions) : IPromptGenerationService
 {
     private readonly GenerationOptions options = promptOptions.GenerationOptions;
-    internal Func<int?,IEnumerable<string>> Choices(PromptPart part)
+    public Func<int?,IEnumerable<string>> Choices(PromptPart part)
     {
         return count => random.RemoveNext(new List<string>(ForPart(part)), count);
     }
 
     public PromptChoiceBuilder GetPromptBuilder() => new (this, promptOptions,random);
-    internal IEnumerable<PromptChoice> Choices(PromptChoiceBuilder prompt)
+    public IEnumerable<PromptChoice> Choices(PromptChoiceBuilder prompt)
     {
         if (random.NextChance(options.PortraitChance))
         {
@@ -26,8 +34,8 @@ public class PromptGenerationService(Random random, PromptOptions promptOptions)
             yield return portrait;
         }
 
-        var character = random.NextChance(options.CharacterChance);
         var prefix = random.NextChance(options.PrefixChance);
+        var character = random.NextChance(options.CharacterChance);
 
         if (prefix)
             yield return prompt.Add(PromptPart.Prefix, suffix: character ? " " : " Butt");
@@ -71,7 +79,11 @@ public class PromptGenerationService(Random random, PromptOptions promptOptions)
         if (random.NextChance(options.ColorChance))
             yield return prompt.Add(PromptPart.Color, suffix: ", ");
         if (random.NextChance(options.ImproverChance))
-            yield return prompt.Add(PromptPart.Improver);
+        {
+            var imp =  prompt.Add(PromptPart.Improver);
+            imp.Choose(imp.Choices.Length > 0 ? random.NextRequired(imp.Choices) : "", preselected: true);
+            yield return imp;
+        }
 
 
     }

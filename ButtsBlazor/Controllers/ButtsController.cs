@@ -10,6 +10,7 @@ using ButtsBlazor.Client.Utils;
 using ButtsBlazor.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.IO;
+using System.Text.RegularExpressions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,8 +21,11 @@ namespace ButtsBlazor.Server.Controllers
     public class ButtsController(ButtsListFileService legacyFileService, FileService fileService,
         ILogger<ButtsController> logger, IOptionsSnapshot<PromptOptions> options, IHubContext<NotifyHub> hub) : ControllerBase
     {
+	    [HttpGet("photobooth")]
+	    public Task<ButtImage>? GetPhotobooth([FromQuery] DateTime? known, [FromQuery] int? except) =>
+		    Get(known, except, ImageType.Output);
         [HttpGet("")]
-        public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except)
+        public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except, [FromQuery]ImageType? type= ImageType.Infinite)
         {
             if(known == null)
                 known = DateTime.Now;
@@ -62,6 +66,12 @@ namespace ButtsBlazor.Server.Controllers
                 butt.IsLatest = false;
                 return butt;
             }
+            await foreach (var butt in fileService.GetRandom(1, ImageType.Output))
+            {
+
+	            butt.IsLatest = false;
+	            return butt;
+            }
 
             return ButtImage.Empty;
         }
@@ -76,8 +86,13 @@ namespace ButtsBlazor.Server.Controllers
 
         // GET: api/<ValuesController>
         [HttpGet("{index:int}")]
-        public ButtImage? GetIndex(int index) =>
-            legacyFileService.Index(index);
+        public async Task<ButtImage?> GetIndex(int index) =>
+            legacyFileService.Index(index) ?? 
+			ToButt(			
+	           await fileService.Get(index));
+
+        private ButtImage? ToButt(ImageEntity get) =>
+	        new ButtImage(get.Path, get.CreationDate, get.RowId, null);
 
         [HttpGet("fileScan")]
         public Task FileScan([FromQuery]ImageType? imageType = null) => fileService.FileScan(imageType);
@@ -106,11 +121,14 @@ namespace ButtsBlazor.Server.Controllers
             return;
         }
 
+        private static readonly Regex ValidTenant = new(@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled);
         [HttpPost("upload")]
         public async Task<ActionResult<UploadResult>> PostFile([FromForm] IFormFile file,
-            [FromForm] string? prompt, [FromForm] string? code, [FromForm] string? inputImage, [FromForm]ImageType? imageType
+            [FromForm] string? prompt, [FromForm] string? code, [FromForm] string? inputImage, [FromForm]ImageType? imageType, string tenant="butts"
         )
         {
+            if(!ValidTenant.IsMatch(tenant))
+				return BadRequest("Invalid tenant name");
             var uploadResult = new UploadResult();
             var untrustedFileName = file.FileName;
             var displayFileName =
@@ -134,7 +152,7 @@ namespace ButtsBlazor.Server.Controllers
             {
                 try
                 {
-                    var saveFileResult = await fileService.SaveAndHashUploadedFile(file.FileName, 
+                    var saveFileResult = await fileService.SaveAndHashUploadedFile(tenant, file.FileName, 
                         imageType ?? ImageType.Output, file.OpenReadStream);
                     if (prompt != null || code != null)
                         await fileService.AttachImageMetadata(saveFileResult, prompt, code, inputImage);
@@ -152,6 +170,10 @@ namespace ButtsBlazor.Server.Controllers
                     uploadResult.Error = $"{displayFileName} error on upload (Err: 3): {ex.Message}";
                 }
             }
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            Response.Headers.Add("Allow-Control-Allow-Headers",
+	            "origin, authorization, accept, content-type, x-requested-with, Location");
+            Response.Headers.Add("Allow-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
             return new CreatedResult(new Uri($"{Request.Scheme}://{Request.Host}/" + uploadResult.Path), uploadResult);
         }
     }

@@ -32,7 +32,7 @@ namespace ButtsBlazor.Server.Pages
         {
             return Page();
         }
-        public async Task<ActionResult> OnPost([FromForm] IFormFile? file)
+        public async Task<ActionResult> OnPost([FromForm] IFormFile? file, string tenant="butts")
         {
             if (file == null) return Page();
             var it = ImageType.Camera;
@@ -59,14 +59,16 @@ namespace ButtsBlazor.Server.Pages
             {
                 try
                 {
-                    var saveFileResult = await fileService.SaveAndHashUploadedFile(file.FileName, it, file.OpenReadStream);
+                    var saveFileResult = await fileService.SaveAndHashUploadedFile(tenant,file.FileName, it, file.OpenReadStream);
                     uploadResult.Uploaded = true;
                     logger.LogInformation("{FileName} saved at {Path} with {Hash}",
                         displayFileName, saveFileResult.Path, uploadResult.Hash);
                     await hub.Clients.NewCameraImage(saveFileResult);
                     return new JsonResult(new
                     {
-                        location= "/prompt?image=" + saveFileResult.Path + "&source=camera"
+                        location = "/camera"
+
+//                        location = "/prompt?image=" + saveFileResult.Path + "&source=camera"
                     });
                 }
                 catch (IOException ex)

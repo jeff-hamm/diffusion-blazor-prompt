@@ -9,7 +9,13 @@ public static class PromptExtensions
         if (@this == null) return "";
         var sb = new StringBuilder();
         foreach (var choice in @this)
-            sb.Append(choice.ToPromptString());
-        return sb.ToString();
+        {
+            var cStr = choice.ToPromptString();
+            if (choice.Preselected)
+                cStr = $"__{cStr}__";
+            sb.Append(cStr);
+        }
+
+        return sb.ToString().Replace("&nbsp;", " ");
     }
 }

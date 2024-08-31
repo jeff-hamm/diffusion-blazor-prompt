@@ -26,7 +26,7 @@ public static class PromptConfig
 
         @this.AddTransient<IButtsNotificationClient, ServerNotificationClient>();
         @this.AddScoped<Random>();
-        @this.AddScoped<PromptGenerationService>();
+        @this.AddScoped<IPromptGenerationService, SnickPromptGenerationService>();
         @this.AddScoped<IButtsApiClient, FakeButtsApiClient>();
 
         return @this;

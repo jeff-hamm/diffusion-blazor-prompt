@@ -8,7 +8,7 @@
     "sourceMap": true,
     "target": "ES2020",
     "moduleResolution": "Node",
-    "module": "es6",
+    "module": "ES2022",
     "outDir": "wwwroot/ts",
     "lib": [ "ES2020", "DOM" ],
     "rootDir": "."
@@ -21,7 +21,7 @@
       "Pages/*",
     ]
   },
-  "exclude": [ "**/*.cshtml", "Worker/**/*" ],
+  "exclude": [ "**/*.cshtml", "Worker/**/*", "node_modules" ],
   "baseUrl": ".",
   "moduleSuffixes": [ ".cshtml", "" ]
 }

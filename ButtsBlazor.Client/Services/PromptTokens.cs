@@ -1,29 +1,34 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using ButtsBlazor.Client.Pages;
+using System.Reflection;
 
 namespace ButtsBlazor.Client.Services;
 
+[Flags]
 public enum PromptPart
-{
-    Prefix,
-    PortraitType,
-    Artist,
-    Suffix,
-    Character,
-    Object,
-    Place,
-    Element,
-    Adjective,
-    Style,
-    Color,
-    Improver,
-    Static,
-    Butts
+{   
+    Prefix       = 1 << 0,
+    PortraitType = 1 << 1,
+    Artist = 1 << 2,
+    Suffix = 1 << 3,
+    Character = 1 << 4,
+    Object = 1 << 5,
+    Place = 1 << 6,
+    Element = 1 << 7,
+    Adjective = 1 << 8,
+    Style = 1 << 9,
+    Color = 1 << 10,
+    Improver = 1 << 11,
+    Static = 1 << 12,
+    Butts = 1 << 13
 }
 
 public class PromptPartAttribute(PromptPart part) : Attribute
 {
     public PromptPart Part { get; } = part;
 }
+
 public static class PromptTokens
 {
     private static Dictionary<PromptPart, string[]> parts = new();
@@ -32,15 +37,39 @@ public static class PromptTokens
     {
         foreach (var field in typeof(PromptTokens).GetFields(BindingFlags.Static | BindingFlags.Public))
         {
-            if(field.GetCustomAttribute<PromptPartAttribute>() is {} p&& field.GetValue(null) is string[] v)
+            if (field.GetCustomAttribute<PromptPartAttribute>() is { } p && field.GetValue(null) is string[] v)
                 parts.Add(p.Part, v);
         }
     }
-    public static string[] ForPart(PromptPart part) => PromptParts.TryGetValue(part, out var v) ? v : Array.Empty<string>();
-    public static IReadOnlyDictionary<PromptPart, string[]> PromptParts => parts;
+    private static readonly Random random = new();
+    public static string[] ForPart(PromptPart part)
+    {
+        if (ForSinglePart(part, out var v))
+            return v;
+        var flags = Enum.GetValues<PromptPart>().Where(value => part.HasFlag(value)).ToArray();
+
+        if (!ForSinglePart(flags[^1], out v))
+            throw new InvalidOperationException($"No prompt parts defined for {v}");
+        for (var i = 0; i < v.Length; i++)
+        {
+            for (var j = 0; j < flags.Length - 1; j++)
+            {
+                if (random.NextChance(.5))
+                    if (PromptParts.TryGetValue(flags[j], out var p))
+                        v[i] = random.NextRequired(p) + " " + v[i];
+            }
+        }
+
+        return v ?? Array.Empty<string>();
+    }
+
+    private static bool ForSinglePart(PromptPart part,[NotNullWhen(true)] out string[]? v) => PromptParts.TryGetValue(part, out v);
+
+public static IReadOnlyDictionary<PromptPart, string[]> PromptParts => parts;
     // Define options for portrait shot types
 
-    [PromptPart(PromptPart.Butts)] public static readonly string[] Butts =
+    //[PromptPart(PromptPart.Butts)] 
+    public static readonly string[] LegacyButts =
     {
         "A butt",
         "An ass",
@@ -48,6 +77,16 @@ public static class PromptTokens
         "A booty",
         "A rump",
         "A bum"
+    };
+    [PromptPart(PromptPart.Butts)]
+    public static readonly string[] Butts =
+    {
+        "butt",
+        "ass",
+        "badonkadonk",
+        "booty",
+        "rump",
+        "bum"
     };
 
     [PromptPart(PromptPart.PortraitType)]
@@ -586,184 +625,184 @@ public static class PromptTokens
 
     [PromptPart(PromptPart.Place)]
     public static readonly string[] Places = {
-        "Underwater City",
-        "Sky Castle",
-        "Forest Temple",
-        "Haunted Mansion",
-        "Crystal Cavern",
-        "Ice Fortress",
-        "Volcano Lair",
-        "Cyber City",
-        "Steam Punk Metropolis",
-        "Enchanted Garden",
-        "Dark Dimension",
-        "Celestial Palace",
-        "Underground Tunnels",
-        "Frozen Wasteland",
-        "Desert Oasis",
-        "Jungle Ruins",
-        "Floating Island",
-        "Time Warp",
-        "Alien Planet",
-        "Deep Space Station",
-        "Magical Academy",
-        "Futuristic Laboratory",
-        "Ancient Library",
-        "Artificial Intelligence Network",
-        "Giant's Lair",
-        "Chaos Realm",
-        "Fairy Tale Castle",
-        "Post-Apocalyptic City",
-        "Interdimensional Nexus",
-        "Dreamscape",
-        "Abandoned Asylum",
-        "Sunken Ship",
-        "Forbidden Temple",
-        "Lost City",
-        "Parallel Universe",
-        "Mystic Marsh",
-        "Parallel World",
-        "Underground Kingdom",
-        "Dark Forest",
-        "Crystal Palace",
-        "Cursed Island",
-        "Rainbow Valley",
-        "Fire Mountain",
-        "Hidden Cave",
-        "Sky Kingdom",
-        "Savage Wilds",
-        "Mystical Mountain",
-        "Ancient Pyramid",
-        "Tropical Beach",
-        "Elemental Plane",
-        "Outer Space Colony",
-        "Underground Bunker",
-        "Lunar Base",
-        "Forgotten Citadel",
-        "Ancient Catacombs",
-        "Holographic Theme Park",
-        "Crystal Lake",
-        "Floating Market",
-        "Underground Volcano",
-        "Abandoned Space Station",
-        "Surreal Landscape",
-        "Crystal Tower",
-        "Mystical Island",
-        "Mysterious Labyrinth",
-        "Jungle Canopy",
-        "Enchanted Marketplace",
-        "Sunken Cityscape",
-        "Haunted Forest",
-        "Space Elevator",
-        "Crystal Lagoon",
-        "Magma Chamber",
-        "Thundering Waterfall",
-        "Ethereal Valley",
-        "Abandoned Subway System",
-        "Mirrored City",
-        "Ancient Citadel",
-        "Frozen Tundra",
-        "Haunted Amusement Park",
-        "Sunken Ruins",
-        "Enchanted Castle",
-        "Sandswept Canyon",
-        "Orbital Station",
-        "Lost Wilderness",
-        "Aurora Borealis",
-        "Giant Redwood Forest",
-        "Futuristic Casino",
-        "Mythical Underworld",
-        "Infinite Desert",
-        "Mystical Labyrinth",
-        "Galactic Gateway",
-        "Submerged Cavern",
-        "Eternal Ice Fields",
-        "Dark Matter Realm",
-        "Holographic City",
-        "Celestial Observatory",
-        "Nebula Cluster",
-        "Glacier National Park",
-        "Undiscovered Island",
-        "Underground Laboratory",
-        "Retro Arcade",
-        "Crystal Gardens",
-        "Chromatic Coastline",
-        "Iridescent Reef",
-        "Lunar Colony",
-        "Rainforest Canopy",
-        "Hyperborean Forest",
-        "Tesseract Station",
-        "Magnetic Caves",
-        "Abyssal Trench",
-        "Interstellar Hub",
-        "Exoplanet Outpost",
-        "Emerald Canyon",
+        "an Underwater City",
+        "a Sky Castle",
+        "a Forest Temple",
+        "a Haunted Mansion",
+        "a Crystal Cavern",
+        "an Ice Fortress",
+        "a Volcano Lair",
+        "a Cyber City",
+        "a Steam Punk Metropolis",
+        "an Enchanted Garden",
+        "a Dark Dimension",
+        "a Celestial Palace",
+        "an Underground Tunnels",
+        "a Frozen Wasteland",
+        "a Desert Oasis",
+        "a Jungle Ruins",
+        "a Floating Island",
+        "a Time Warp",
+        "an Alien Planet",
+        "a Deep Space Station",
+        "a Magical Academy",
+        "a Futuristic Laboratory",
+        "an Ancient Library",
+        "an Artificial Intelligence Network",
+        "a Giant's Lair",
+        "a Chaos Realm",
+        "a Fairy Tale Castle",
+        "a Post-Apocalyptic City",
+        "an Interdimensional Nexus",
+        "a Dreamscape",
+        "an Abandoned Asylum",
+        "a Sunken Ship",
+        "a Forbidden Temple",
+        "a Lost City",
+        "a Parallel Universe",
+        "a Mystic Marsh",
+        "a Parallel World",
+        "an Underground Kingdom",
+        "a Dark Forest",
+        "a Crystal Palace",
+        "a Cursed Island",
+        "a Rainbow Valley",
+        "a Fire Mountain",
+        "a Hidden Cave",
+        "a Sky Kingdom",
+        "the Savage Wilds",
+        "a Mystical Mountain",
+        "an Ancient Pyramid",
+        "a Tropical Beach",
+        "an Elemental Plane",
+        "an Outer Space Colony",
+        "an Underground Bunker",
+        "a Lunar Base",
+        "a Forgotten Citadel",
+        "an Ancient Catacombs",
+        "a Holographic Theme Park",
+        "a Crystal Lake",
+        "a Floating Market",
+        "an Underground Volcano",
+        "an Abandoned Space Station",
+        "a Surreal Landscape",
+        "a Crystal Tower",
+        "a Mystical Island",
+        "a Mysterious Labyrinth",
+        "a Jungle Canopy",
+        "an Enchanted Marketplace",
+        "a Sunken Cityscape",
+        "a Haunted Forest",
+        "a Space Elevator",
+        "a Crystal Lagoon",
+        "a Magma Chamber",
+        "a Thundering Waterfall",
+        "an Ethereal Valley",
+        "an Abandoned Subway System",
+        "a Mirrored City",
+        "an Ancient Citadel",
+        "a Frozen Tundra",
+        "a Haunted Amusement Park",
+        "a Sunken Ruins",
+        "an Enchanted Castle",
+        "a Sandswept Canyon",
+        "an Orbital Station",
+        "a Lost Wilderness",
+        "an Aurora Borealis",
+        "a Giant Redwood Forest",
+        "a Futuristic Casino",
+        "a Mythical Underworld",
+        "an Infinite Desert",
+        "a Mystical Labyrinth",
+        "a Galactic Gateway",
+        "a Submerged Cavern",
+        "an Eternal Ice Fields",
+        "a Dark Matter Realm",
+        "a Holographic City",
+        "a Celestial Observatory",
+        "a Nebula Cluster",
+        "a Glacier National Park",
+        "an Undiscovered Island",
+        "an Underground Laboratory",
+        "a Retro Arcade",
+        "a Crystal Gardens",
+        "a Chromatic Coastline",
+        "an Iridescent Reef",
+        "a Lunar Colony",
+        "a Rainforest Canopy",
+        "a Hyperborean Forest",
+        "a Tesseract Station",
+        "a Magnetic Caves",
+        "an Abyssal Trench",
+        "an Interstellar Hub",
+        "an Exoplanet Outpost",
+        "an Emerald Canyon",
         "Spectral Sands",
-        "Lost Oasis",
-        "Nebula Nebula",
-        "Astral Nexus",
-        "Radiant Cityscape",
-        "Euphoric Eden",
-        "Pixelated Wonderland",
-        "Clockwork Metropolis",
-        "Ethereal Plane",
-        "Neo-Tokyo Megapolis",
-        "Doomsday New York",
+        "a Lost Oasis",
+        "a Nebula Nebula",
+        "an Astral Nexus",
+        "a Radiant Cityscape",
+        "a Euphoric Eden",
+        "a Pixelated Wonderland",
+        "a Clockwork Metropolis",
+        "an Ethereal Plane",
+        "a Neo-Tokyo Megapolis",
+        "a Doomsday New York",
         "Osaka",
-        "Futuristic New York",
-        "Gothic Paris",
-        "Cybernetic London",
-        "Spectral Rome",
-        "Mythical Cairo",
-        "Enchanted Sydney",
+        "a Futuristic New York",
+        "a Gothic Paris",
+        "a Cybernetic London",
+        "a Spectral Rome",
+        "a Mythical Cairo",
+        "an Enchanted Sydney",
         "Steampunk San Francisco",
         "Eerie New Orleans",
         "Epic Berlin",
         "Venice of Dreams",
         "Steampunk London",
         "Retrofuturistic Moscow",
-        "Ruins of Rome",
+        "the Ruins of Rome",
         "Shanghai Skybridge",
-        "Cybernetic Arena",
-        "Witch's Cottage",
-        "Infinite Jungle",
-        "Robot Zoo",
-        "Elven Treehouse",
-        "Desert Mirage",
-        "Virtual Reality Playground",
-        "Crystalized Cave",
-        "Dragon's Den",
-        "Sacred Waterfall",
-        "Dimensional Library",
-        "Moonlit Orchard",
-        "Alchemist's Tower",
-        "Haunted Graveyard",
-        "Oceanic Abyss",
-        "Temporal Café",
+        "a Cybernetic Arena",
+        "a Witch's Cottage",
+        "an Infinite Jungle",
+        "a Robot Zoo",
+        "an Elven Treehouse",
+        "a Desert Mirage",
+        "a Virtual Reality Playground",
+        "a Crystalized Cave",
+        "a Dragon's Den",
+        "a Sacred Waterfall",
+        "a Dimensional Library",
+        "a Moonlit Orchard",
+        "an Alchemist's Tower",
+        "a Haunted Graveyard",
+        "an Oceanic Abyss",
+        "a Temporal Café",
         "Lost Atlantis",
-        "Vampire Castle",
-        "Invisible Maze",
-        "Cherry Blossom Temple",
-        "Digital Utopia",
-        "Celestial Zoo",
-        "Pirate Cove",
-        "Forest of Echoes",
-        "Mars Colony",
-        "Alien Zoo",
-        "Petrified Forest",
-        "Goblin Market",
-        "Cursed Zoo",
-        "Eldritch Library",
-        "Heavenly Observatory",
-        "Magic School",
-        "Undying Desert",
-        "Temporal Rift",
-        "Robot Factory",
-        "Spacecraft Graveyard",
-        "Arctic Wilderness",
-        "Lush Savannah",
-        "Carnival of Nightmares",
-        "Starlit Beach",
+        "a Vampire Castle",
+        "an Invisible Maze",
+        "a Cherry Blossom Temple",
+        "a Digital Utopia",
+        "a Celestial Zoo",
+        "a Pirate Cove",
+        "a Forest of Echoes",
+        "a Mars Colony",
+        "an Alien Zoo",
+        "a Petrified Forest",
+        "a Goblin Market",
+        "a Cursed Zoo",
+        "an Eldritch Library",
+        "a Heavenly Observatory",
+        "a Magic School",
+        "an Undying Desert",
+        "a Temporal Rift",
+        "a Robot Factory",
+        "a Spacecraft Graveyard",
+        "an Arctic Wilderness",
+        "a Lush Savannah",
+        "a Carnival of Nightmares",
+        "a Starlit Beach",
     };
 
     [PromptPart(PromptPart.Element)]
@@ -897,10 +936,12 @@ public static class PromptTokens
         "Golden Hour",
         "Underwater",
         "Pokémon",
-
     };
-    [PromptPart(PromptPart.Style)]
-    public static readonly string[] Styles = {
+
+
+
+//    [PromptPart(PromptPart.Style)]
+    public static readonly string[] LegacyStyles = {
         "Digital Art",
         "Surrealism",
         "Concept Art",
@@ -1004,6 +1045,9 @@ public static class PromptTokens
         "Yellow Monochrome",
         "Purple Monochrome",
     };
+    [PromptPart(PromptPart.Style)]
+    public static readonly string[] Styles =
+        LegacyStyles.Concat(Colors).ToArray();
 
     [PromptPart(PromptPart.Artist)]
     public static readonly string[] Artists = {

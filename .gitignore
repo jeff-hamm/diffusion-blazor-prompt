@@ -279,3 +279,4 @@ src/lib/nuget
 **/butts_images/**
 **/__pycache__/**
 **/js/**
+*.db*

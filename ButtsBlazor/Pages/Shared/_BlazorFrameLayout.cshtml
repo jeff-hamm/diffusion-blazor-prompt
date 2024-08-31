@@ -1,0 +1,35 @@
+﻿@using ButtsBlazor.Client
+@using ButtsBlazor.Server.Services
+@using Microsoft.AspNetCore.Http.Extensions
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>@ViewData["Title"]</title>
+	<link rel="stylesheet" href="/css/bootstrap.css?ver=8"></link>
+	<link rel="stylesheet" href="/css/vendors.css?ver=8"></link>
+	<link rel="stylesheet" href="app.css?ver=10" />
+	<link rel="icon" type="image/png" href="/favicon.png">
+
+	<meta property="og:title" content="@ViewData["Title"]" />
+	<meta property="og:description" content="@ViewData["Description"]" />
+	<meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path)" />
+	@Html.RenderHeadContent()
+	@await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+<script type="text/javascript" src="/js/gradio.js?v=1231231"></script>
+<div class="page" id="app">
+	@RenderBody()
+</div>
+
+
+<blazor-page application-assembly="typeof(Routes).Assembly" application-base-path="@(new Uri(ViewContext.HttpContext.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority))"></blazor-page>
+
+
+@await RenderSectionAsync("Scripts", required: false)
+
+@Html.RenderScripts()
+</body>
+</html>

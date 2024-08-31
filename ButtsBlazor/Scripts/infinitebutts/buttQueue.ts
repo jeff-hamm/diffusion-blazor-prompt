@@ -12,6 +12,10 @@ export default class ButtQueue {
         this.targetSize = options.preloadCount;
         this.randomButtsQueue = [];
         this.apiUrl = options.urlBase;
+        var t =new URLSearchParams(window.location.search).get("type");
+        if (t) {
+            this.apiUrl += "/" + t;
+        }
         const url = new URL("worker/loadButtsWorker.js", window.location.origin);
         this.preloadWorker = new Worker(url, { type: "module" });
         this.preloadWorker.onmessage = e => this._preloadWorkerMessage(e);

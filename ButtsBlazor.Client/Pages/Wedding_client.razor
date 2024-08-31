@@ -1,0 +1,12 @@
+﻿@page "/wedding_client"
+@rendermode ButtsBlazor.Server.Components.NoPreRenderWebAssembly.Instance
+@using ButtsBlazor.Client.Utils
+@inject PromptOptions Options
+<AiGenerate GradioUri="@Options.GradioUri" Image="@Image" Prompt="@Prompt" Tenant="Tenant" />
+
+@code{
+	[Parameter,SupplyParameterFromQuery]public string? Image { get; set; }
+	[Parameter, SupplyParameterFromQuery] public string? Prompt { get; set; }
+	[Parameter, SupplyParameterFromQuery] public string Tenant { get; set; } = "wedding";
+
+}

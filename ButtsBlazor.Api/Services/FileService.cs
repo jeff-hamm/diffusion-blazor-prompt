@@ -13,6 +13,8 @@ using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using static System.Net.Mime.MediaTypeNames;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -49,7 +51,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             }
         }
     }
-    public async ValueTask<ImageEntity> SaveAndHashUploadedFile(string fileName, ImageType imageType, Func<Stream> readStream)
+    public async ValueTask<ImageEntity> SaveAndHashUploadedFile(string tenant, string fileName, ImageType imageType, Func<Stream> readStream)
     {
         if (!pathService.TryGetValidExtension(fileName, out var extension))
             throw new InvalidOperationException($"No support for file extension ext");
@@ -59,7 +61,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         {
             var hash = await stream.SaveAndHashAsync(tempPath);
             var base64Hash = Convert.ToBase64String(hash);
-            var relativePath = pathService.Image(imageType,FileUtils.Base64ToFileName(base64Hash, extension));
+            var relativePath = pathService.Image(imageType,FileUtils.Base64ToFileName(base64Hash, extension),tenant);
             var image = new ImageEntity()
             {
                 Path = relativePath,
@@ -350,10 +352,16 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
             Code = code,
             InputImage = inputImage,
             ImageEntityId = saveFileResult.RowId,
-            ImageEntity = saveFileResult
+//            ImageEntity = saveFileResult
         };
         dbContext.Add(metadata);
         await SaveChanges(dbContext);
         return metadata;
+    }
+
+    public async Task<ImageEntity?> Get(int i)
+    {
+	    await using var db = await dbContextFactory.CreateDbContextAsync();
+	    return await db.Images.FindAsync(i);
     }
 }

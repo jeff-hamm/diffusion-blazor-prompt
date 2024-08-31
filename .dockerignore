@@ -16,7 +16,7 @@
 **/charts
 **/docker-compose*
 **/Dockerfile*
-**/node_modules
+**/node_modules/*
 **/npm-debug.log
 **/site-packages
 **/butts_images
@@ -26,3 +26,7 @@
 **/values.dev.yaml
 LICENSE
 README.md
+*.db
+*.zip
+**/site-packages/*
+**/wwwroot/**/*

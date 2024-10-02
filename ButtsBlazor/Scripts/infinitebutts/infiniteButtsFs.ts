@@ -164,7 +164,7 @@ export default class InfiniteButts {
                 if (seconds < 0)
                     seconds = 0;
                 // Display the result in the element with id="demo"
-                this.$timer.text(seconds + 's');
+                this.$timer.text((seconds +1) + 's');
                 // If the count down is finished, write some text
                 this.$refreshBox.toggle(this.refreshTimer > 2000);
             }, 1000);

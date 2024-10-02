@@ -7,8 +7,9 @@ import { pageTitle } from '../types';
 export default class IndexMode extends DefaultMode {
     constructor(queue: ButtQueue) {
         super(queue);
-        this.name = "index";
+        this.name = IndexMode.ModeName;
     }
+    static ModeName = "index";
     isPageMatch(page?: string) {
         return !isNaN(parseInt(page));
     }

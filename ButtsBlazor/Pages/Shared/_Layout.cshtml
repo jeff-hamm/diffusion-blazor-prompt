@@ -6,12 +6,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@SiteConfig.HomeTitle</title>
+    <title>@SiteConfig.DecodedHomeTitle</title>
     @if(ViewData["NoVendorCss"] is not bool v || !v) {
         <link rel="stylesheet" href="/styles/bootstrap.css?ver=8"></link>
         <link rel="stylesheet" href="/styles/vendors.css?ver=8"></link>
     }
-    <link rel="stylesheet" href="app.css?ver=15" />
+    <link rel="stylesheet" href="app.css?ver=16" />
     <link rel="icon" type="image/png" href="@SiteConfig.FavIcon">
 
     @if (!String.IsNullOrEmpty(SiteConfig.GoogleFontFamily))

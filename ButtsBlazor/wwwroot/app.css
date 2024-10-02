@@ -248,11 +248,11 @@ div:focus {
 .loaded .loading-container {
     display: none;
 }
-.loading-hidden {
+#content .loading-hidden {
     display: none;
 }
-.loaded .loading-hidden {
-    display: initial;
+#content.loaded .loading-hidden {
+    display: unset;
 }
 
 .loading-container {
@@ -346,7 +346,8 @@ div.fullscreen {
     max-height: 80vh;
 }
 
-.image-controls {
+.loaded .image-controls {
+    outline: none;
     display: flex;
     flex-direction: row;
     margin: 1vh;
@@ -426,9 +427,12 @@ img.photo {
     margin: 0 2vw;
     
 }
+#photoContainer {
+    outline: none;
+}
 
-.photoContainer img:not(href) {
-    display:none;
+#photoContainer img:not([src]) {
+    outline: none;
 }
 
 @media (orientation: landscape) {

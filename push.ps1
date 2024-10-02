@@ -5,7 +5,7 @@ try {
     docker compose build "infinite-butts" && docker compose push "infinite-butts"
     scp ./docker-compose.yml root@${Env:ButtsWeb}:.
     scp ./docker-compose.deployed.yml root@${Env:ButtsWeb}:.
-    scp ./protobooth.env root@${Env:ButtsWeb}:.
+    scp ButtsBlazor/protobooth.env root@${Env:ButtsWeb}:.
     scp ./nginx.conf root@${Env:ButtsWeb}:.
     ssh root@${Env:ButtsWeb} "docker container stop infinite-butts; docker container rm infinite-butts; docker compose -f ./docker-compose.yml -f docker-compose.deployed.yml down; docker compose -f ./docker-compose.yml -f docker-compose.deployed.yml up --no-build --pull always --force-recreate --remove-orphans"
     # docker pull sjc.vultrcr.com/infinitebutts/butts-prompts; docker container stop infinite-butts;

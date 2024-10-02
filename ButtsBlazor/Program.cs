@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Env.Load("./protobooth.env");
+Env.Load("./protobooth.env");
 var config = builder.AddSiteConfig();
 builder.AddButts();
 builder.Services.AddSignalR().AddHubOptions<NotifyHub>(opts =>

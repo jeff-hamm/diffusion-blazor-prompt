@@ -54,7 +54,7 @@
     urlBase: "/api/butts",
     refreshTimer: @(siteConfig.RandomImageDisplaySeconds) * 1000,
     latestRefreshTimer: @(siteConfig.NewImageDisplaySeconds) * 1000,
-    indexRefreshTimer: 45 * 1000,
+    indexRefreshTimer: @(siteConfig.IndexRefreshSeconds ?? 0) * 1000,
     preloadCount: 5,
     maxNavSpeed: 100,
     };

@@ -65,6 +65,7 @@ public class SiteConfigOptions
     public const string SectionName = "SiteConfig";
     public string RootCssClass { get; set; } = "infinite";
     public string HomeTitle { get; set; } = "Infinite Butts - AI Butt Generator";
+    public string DecodedHomeTitle => HomeTitle.Replace("*","'");
     public string HomeDescription { get; set; } = "An infinite stream of AI generated butts.";
     public string BackgroundImage { get; set; } = "/bg.png";
     public string LoaderImage { get; set; } = "/infinitypeach.svg";

@@ -72,15 +72,17 @@ public class SiteConfigOptions
     public string? BackgroundBlur { get; set; }
     public string FontWeight {get;set;} = "normal";
     public string FontColor {get;set;}  = "white";
-public string? GoogleFontFamily {get;set;}
+    public int RandomImageDisplaySeconds {get;set;} = 15;
+    public int NewImageDisplaySeconds {get;set;} = 30;
+    public string? GoogleFontFamily {get;set;}
     public bool IsWhiteTransparent { get; set; }
     public ImageType DefaultImageType { get; set; } = ImageType.Infinite;
-
     public string BoxColor { get; set; } = "#DDDE";
     public string DbPath { get;  set; } = @"db/butts.db";
     public string FullDbPath => Path.GetFullPath(DbPath);
     public string FontSize { get; set; } = "5vh";
     public string? DefaultMetaImage { get; set; }
+    public int? IndexRefreshSeconds { get; set; } = 45;
 }
 
 public class FakeButtsApiClient : IButtsApiClient

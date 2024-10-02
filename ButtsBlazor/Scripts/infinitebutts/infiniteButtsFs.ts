@@ -5,6 +5,7 @@ import defaultOptions from './options.js'
 import ButtQueue from "./buttQueue.js";
 import Share from './share.js';
 import QRCode from 'qrcode'
+import IndexMode from './modes/indexMode.js';
 
 export class PhotoSetter {
     constructor() {
@@ -113,8 +114,15 @@ export default class InfiniteButts {
 
     async setPage(next: butts.ButtPage) {
         clearTimeout(this.timer);
-        let nextRefresh = 
-            next.data?.isLatest ? this.options.latestRefreshTimer : this.refreshTimer;
+        let nextRefresh;
+        if (next.data?.isLatest)
+            nextRefresh = this.options.latestRefreshTimer;
+        else if (this.pageMode?.name == IndexMode.ModeName) {
+            nextRefresh = this.options.indexRefreshTimer;
+        } else {
+            nextRefresh = this.refreshTimer;
+        }
+        
         if (next.page && !this.pageMode.isPageMatch(next.page)) {
             this.loadPage(next.page);
             return;
@@ -122,11 +130,13 @@ export default class InfiniteButts {
         if (next.nextRefresh)
             nextRefresh = next.nextRefresh;
         await this.setButt(next)
-        this.countdown(nextRefresh);
-        this.isRunning = true;
-        this.timer = setTimeout(async () => {
-            await this.loop();
-        }, nextRefresh);
+        if (nextRefresh > 0) {
+            this.countdown(nextRefresh);
+            this.isRunning = true;
+            this.timer = setTimeout(async () => {
+                await this.loop();
+            }, nextRefresh);
+        }
 
     }
 

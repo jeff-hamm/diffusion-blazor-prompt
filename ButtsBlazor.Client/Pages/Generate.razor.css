@@ -14,3 +14,10 @@
     opacity: .75;
 }
 */
+
+@media print {
+    header, footer, aside, form, .page-intro, .loading-container, div#app:before, .modal, .modal-dialog {
+        display: none;
+    }
+
+}

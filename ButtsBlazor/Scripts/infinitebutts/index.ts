@@ -4,7 +4,11 @@ import InfiniteButts from "./infiniteButtsFs.js";
 import './infiniteButts.css'
 import lightbox from  'lightbox2/dist/js/lightbox.js'
 import 'lightbox2/dist/css/lightbox.min.css'
-const infiniteButts = new InfiniteButts($(''), null);
+import defaultOptions from './options.js';
+import { IButtsOptions } from './types.js';
+
+const options = 'clientOptions' in window ? <IButtsOptions>window.clientOptions : defaultOptions;
+const infiniteButts = new InfiniteButts($(''), options);
 
 lightbox.end = function () {
 

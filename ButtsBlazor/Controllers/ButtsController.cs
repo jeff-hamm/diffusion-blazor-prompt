@@ -19,16 +19,18 @@ namespace ButtsBlazor.Server.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class ButtsController(ButtsListFileService legacyFileService, FileService fileService,
-        ILogger<ButtsController> logger, IOptionsSnapshot<PromptOptions> options, IHubContext<NotifyHub> hub) : ControllerBase
+        ILogger<ButtsController> logger, IOptionsSnapshot<PromptOptions> options,
+        IOptionsSnapshot<SiteConfigOptions> siteOptions,
+        IHubContext<NotifyHub> hub) : ControllerBase
     {
-	    [HttpGet("photobooth")]
+	    [HttpGet("photo")]
 	    public Task<ButtImage>? GetPhotobooth([FromQuery] DateTime? known, [FromQuery] int? except) =>
-		    Get(known, except, ImageType.Output);
+		    Get(known, except, ImageType.Photo);
         [HttpGet("")]
-        public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except, [FromQuery]ImageType? type= ImageType.Infinite)
+        public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except, [FromQuery]ImageType? type)
         {
-            if(known == null)
-                known = DateTime.Now;
+            type ??= siteOptions.Value.DefaultImageType;
+            known ??= DateTime.Now;
             bool isMostRecent = true;
             await foreach (var path in fileService.GetLatest(2, ImageType.Output))
             {
@@ -45,7 +47,7 @@ namespace ButtsBlazor.Server.Controllers
                     return path;
             }
             isMostRecent = true;
-            await foreach (var path in fileService.GetLatest(2, ImageType.Infinite))
+            await foreach (var path in fileService.GetLatest(2, type ?? siteOptions.Value.DefaultImageType))
             {
                 if (isMostRecent)
                 {
@@ -60,17 +62,11 @@ namespace ButtsBlazor.Server.Controllers
                     return path;
             }
 
-            await foreach (var butt in fileService.GetRandom(1, ImageType.Infinite))
+            await foreach (var butt in fileService.GetRandom(1, type ?? siteOptions.Value.DefaultImageType))
             {
 
                 butt.IsLatest = false;
                 return butt;
-            }
-            await foreach (var butt in fileService.GetRandom(1, ImageType.Output))
-            {
-
-	            butt.IsLatest = false;
-	            return butt;
             }
 
             return ButtImage.Empty;

@@ -66,40 +66,6 @@
     <None Include="tsconfig.json" />
     <None Include="Worker\package.json" />
     <None Include="Worker\tsconfig.json" />
-    <None Include="wwwroot\css\bootstrap.css.map" />
-    <None Include="wwwroot\css\infiniteButts.css.map" />
-    <None Include="wwwroot\css\vendors.css.map" />
-    <None Include="wwwroot\js\764.js" />
-    <None Include="wwwroot\js\764.js.map" />
-    <None Include="wwwroot\js\884.js" />
-    <None Include="wwwroot\js\884.js.map" />
-    <None Include="wwwroot\js\bootstrap.js" />
-    <None Include="wwwroot\js\bootstrap.js.map" />
-    <None Include="wwwroot\js\generate.js" />
-    <None Include="wwwroot\js\generate.js.map" />
-    <None Include="wwwroot\js\gradio.js" />
-    <None Include="wwwroot\js\gradio.js.map" />
-    <None Include="wwwroot\js\infiniteButts.js" />
-    <None Include="wwwroot\js\infiniteButts.js.map" />
-    <None Include="wwwroot\js\input.js" />
-    <None Include="wwwroot\js\input.js.map" />
-    <None Include="wwwroot\js\jquery.js" />
-    <None Include="wwwroot\js\jquery.js.map" />
-    <None Include="wwwroot\js\listener.js" />
-    <None Include="wwwroot\js\listener.js.map" />
-    <None Include="wwwroot\js\runtime.js" />
-    <None Include="wwwroot\js\runtime.js.map" />
-    <None Include="wwwroot\js\slots.js" />
-    <None Include="wwwroot\js\slots.js.map" />
-    <None Include="wwwroot\js\vendors.js" />
-    <None Include="wwwroot\js\vendors.js.map" />
-    <None Include="wwwroot\lib\ipad-hack.js.map" />
-    <None Include="wwwroot\lib\ipad.js.map" />
-    <None Include="wwwroot\worker\loadButtsWorker.js" />
-    <None Include="wwwroot\worker\loadButtsWorker.js.map" />
-    <None Include="wwwroot\worker\tsconfig.tsbuildinfo" />
-    <None Include="wwwroot\worker\utils.js" />
-    <None Include="wwwroot\worker\utils.js.map" />
   </ItemGroup>
 
 
@@ -109,6 +75,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="DotNetEnv" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -123,6 +90,21 @@
   <ItemGroup>
     <TypeScriptCompile Include="wwwroot\worker\loadButtsWorker.d.ts" />
     <TypeScriptCompile Include="wwwroot\worker\utils.d.ts" />
+ <None Include="wwwroot\**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>   
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Remove="protobooth.env" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Content Include="protobooth.env">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

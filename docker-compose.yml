@@ -1,34 +1,56 @@
 version: '3.4'
 
 services:
-  buttsblazor:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - infinite-butts
+      - protobooth
+      
+  infinite-butts:
     image: sjc.vultrcr.com/infinitebutts/butts-prompts
-#    image: jumpmyman/butts-prompts
+    container_name: infinite-butts
     build:
       context: .
       dockerfile: ./ButtsBlazor/Dockerfile
-    volumes:
-      - D:\OneDrive\AI\ButtsBlazor\ButtsBlazor\wwwroot\butts_images:/app/wwwroot/butts_images
-      - D:\OneDrive\AI\ButtsBlazor\ButtsBlazor\db:/app/db
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
     ports:
-      - "8080:8080"
+      - "8080"
+    restart: unless-stopped
+  protobooth:
+    image: sjc.vultrcr.com/infinitebutts/butts-prompts
+    container_name: protobooth
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8081
+    build:
+      context: .
+      dockerfile: ./ButtsBlazor/Dockerfile
+    ports:
+      - "8081"
     restart: unless-stopped
 
-  buttsgenerator:
-    image: sjc.vultrcr.com/infinitebutts/butts-generator
-#    image: jumpmyman/butts-generator
-    build:
-      context: ./ButtsBlazor.Generator
-      dockerfile: ./Dockerfile
-    volumes:
-      - ~/.cache:/home/user/.cache
-    ports:
-      - "7860:7860"
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+#   buttsgenerator:
+#     image: sjc.vultrcr.com/infinitebutts/butts-generator
+# #    image: jumpmyman/butts-generator
+#     build:
+#       context: ../ButtsBlazor.Generator
+#       dockerfile: ./Dockerfile
+#     environment:
+#       - DIFFUSERS_VERBOSITY=debug
+#     volumes:
+#       - ~/.cache:/home/user/.cache
+#     ports:
+#       - "7860:7860"
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: all
+#               capabilities: [gpu]

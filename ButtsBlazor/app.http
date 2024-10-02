@@ -1,4 +1,5 @@
 # For more info on HTTP files go to https://aka.ms/vs/httpfile
+#http://127.0.0.1:5023/wedding?image=butts_images%2fprompted%2f1kYQlY335ZBIDRR-HJM2Xnb4FRs_llzYMXG2DGGCxSk.png&prompt=hi&tenant=butts
 @hostname=localhost
 @port=5555
 POST http://{{hostname}}:{{port}}/prompt

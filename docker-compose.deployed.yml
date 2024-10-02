@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+  ngnix:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    network_mode: host
+    depends_on:
+      - infinite-butts
+      - protobooth
+  infinite-butts:
+    volumes:
+      - /mnt/butts/images:/app/wwwroot/butts_images:rw 
+      - /mnt/butts/db:/app/db:rw
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Producti
+    ports:
+      - "8080:8080"
+
+  protobooth:
+
+    env_file: protobooth.env
+    volumes:
+      - /mnt/butts/protobooth_images:/app/wwwroot/butts_images:rw 
+      - /mnt/butts/protobooth_db:/app/db:rw
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "8081:8081"

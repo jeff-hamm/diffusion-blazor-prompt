@@ -20,7 +20,7 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace ButtsBlazor.Api.Services;
 
-public class FileService(ImagePathService pathService, PromptOptions config, IDbContextFactory<ButtsDbContext> dbContextFactory, ILogger<FileService> logger)
+public class FileService(ImagePathService pathService, PromptOptions config, SiteConfigOptions siteConfig, IDbContextFactory<ButtsDbContext> dbContextFactory, ILogger<FileService> logger)
 {
     private readonly Random random = new Random();
     public async Task FileScan(ImageType? imageType = null)
@@ -135,7 +135,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
 
         var randomCount =
             (totalCount - paths.Count);
-        await foreach (var recent in GetRandom(randomCount, ImageType.Infinite))
+        await foreach (var recent in GetRandom(randomCount, siteConfig.DefaultImageType))
         {
             if (paths.Count >= totalCount)
                 return paths;
@@ -162,10 +162,11 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
         return paths;
     }
 
-    public async IAsyncEnumerable<ButtImage> GetRandom(int count, ImageType imageType=ImageType.Infinite)
+    public async IAsyncEnumerable<ButtImage> GetRandom(int count, ImageType? imageType)
     {
+        imageType ??= siteConfig.DefaultImageType;
         await using var db = await dbContextFactory.CreateDbContextAsync();
-        while (count > 0 && await NextRandom(db, imageType) is { } randomImage)
+        while (count > 0 && await NextRandom(db, imageType.Value) is { } randomImage)
         {
             if (!randomImage.Path.FilePath.Exists)
                 continue;
@@ -200,9 +201,10 @@ public class FileService(ImagePathService pathService, PromptOptions config, IDb
 
     private readonly SemaphoreSlim randomImagesLock = new(1);
     private ConcurrentDictionary<ImageType,ConcurrentBag<ButtImage>> randomImagesByType = new();
-    internal async Task<ButtImage?> NextRandom(ButtsDbContext db, ImageType imageType = ImageType.Infinite)
+    internal async Task<ButtImage?> NextRandom(ButtsDbContext db, ImageType? imageType)
     {
-        var randomImages = randomImagesByType.GetOrAdd(imageType, it => new ConcurrentBag<ButtImage>());
+        imageType ??= siteConfig.DefaultImageType;
+        var randomImages = randomImagesByType.GetOrAdd(imageType.Value, it => new ConcurrentBag<ButtImage>());
         if (randomImages.TryTake(out var path))
             return path;
         await randomImagesLock.WaitAsync();

@@ -1,30 +1,45 @@
 ﻿@page "/{number:int?}"
+@inject SiteConfigOptions siteConfig
+@using ButtsBlazor.Api.Services
 @{
     Layout = "Shared/_Layout";
-    ViewData["Title"] = "Infinite Butts";
+    ViewData["Title"] = siteConfig.HomeTitle;
+    ViewData["NoVendorCss"] = true;
 }
 
 <div id="content" class="fullscreen">
     <div id="spinner" class="loading-container" style="z-index: -1">
-        <img src="/infinitypeach.svg" width="100" height="100" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="circle-notch" class="spin loading-icon" role="img" />
+        <img src="@siteConfig.LoaderImage" width="100" height="100" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="circle-notch" class="spin loading-icon" role="img" />
     </div>
-    <div class="fullscreen-content">
-        <div style="max-height: 100vh;">
-            <img id="photo" style="width: auto; height: 100vh; vertical-align: middle;"/>
-        </div>
-        <div class="image-controls lb-data" style="justify-content: space-between; position: absolute; bottom: 0; line-height: .7em; margin-bottom: 1vh; left: 5%;">
-            <div>
-                <span id="caption" class="lb-caption"></span>
-                <span id="refresh-box" class="lb-refresh">
-                    <span>Refresh: </span>
-                    <span id="timer"></span>
-                </span>
-                <div id="play-link"></div>
+
+        @if (siteConfig.IsWhiteTransparent)
+        {
+            <style>
+                .fullscreen-content #photo {
+                    mix-blend-mode: multiply;
+                }
+            </style>
+        }
+            <div id="photoContainer" class="fade fullscreen-content">
+                 <img  class="photo" />
+             </div>
+        <div class="image-controls lb-data">
+            <div class="qr-container">
+                @* <canvas id="qrCode" class="qr-code" ></canvas> *@
+                <img id="qrCode" class="qr-code" />
             </div>
-            @*             <span id="shareLink" data-share="device facebook twitter" data-share-label="Share on" data-share-device="Share using device sharing"></span>
- *@
-            </div>
-    </div>
+                <div class="refesh-container">
+                    <span id="caption" class="lb-caption"></span>
+                    <span id="refresh-box" class="lb-refresh">
+                        <span>Next: </span>
+                        <span id="timer"></span>
+                    </span>
+                    <div id="play-link"></div>
+                </div>
+                @*             <span id="shareLink" data-share="device facebook twitter" data-share-label="Share on" data-share-device="Share using device sharing"></span>
+     *@
+                </div>
+
 </div>
 @* 
 
@@ -34,12 +49,23 @@
     </a>
 </div>
  *@
+ <script type="text/javascript">
+    window.clientOptions = {
+    urlBase: "/api/butts",
+    refreshTimer: 20 * 1000,
+    latestRefreshTimer: 45 * 1000,
+    indexRefreshTimer: 45 * 1000,
+    preloadCount: 5,
+    maxNavSpeed: 100,
+    };
+    window.defaultImageType = '@siteConfig.DefaultImageType.ToString()';
+ </script>
    
 @section Scripts {
-    <script src="/js/runtime.js?ver=8"></script>
+    @* <script src="/js/runtime.js?ver=8"></script>
     <script src="/js/jquery.js?ver=314"></script>
     <script src="/js/bootstrap.js?ver=8"></script>
-    <script src="/js/vendors.js?ver=8"></script>
+    <script src="/js/vendors.js?ver=8"></script> *@
     <script src="/js/infiniteButts.js?ver=836daae22266d8a6f59d"></script>
 
 }

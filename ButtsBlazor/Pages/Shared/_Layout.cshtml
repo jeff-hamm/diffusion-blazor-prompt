@@ -1,25 +1,57 @@
-﻿]@using ButtsBlazor.Server.Services
+﻿@using ButtsBlazor.Api.Services
+@using ButtsBlazor.Server.Services
+@inject SiteConfigOptions SiteConfig
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Infinite Butts - AI Butt Generator</title>
-    <link rel="stylesheet" href="/css/bootstrap.css?ver=8"></link>
-    <link rel="stylesheet" href="/css/vendors.css?ver=8"></link>
-    <link rel="stylesheet" href="app.css?ver=10" />
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>@SiteConfig.HomeTitle</title>
+    @if(ViewData["NoVendorCss"] is not bool v || !v) {
+        <link rel="stylesheet" href="/styles/bootstrap.css?ver=8"></link>
+        <link rel="stylesheet" href="/styles/vendors.css?ver=8"></link>
+    }
+    <link rel="stylesheet" href="app.css?ver=15" />
+    <link rel="icon" type="image/png" href="@SiteConfig.FavIcon">
 
-    <meta property="og:title" content="Infinite Butts" />
-    <meta property="og:description" content="An infinite stream of AI generated butts." />
-    <meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path)" />
+    @if (!String.IsNullOrEmpty(SiteConfig.GoogleFontFamily))
+    {
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=@System.Web.HttpUtility.UrlEncode(SiteConfig.GoogleFontFamily):ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    }
+    <meta property="og:title" content="@SiteConfig.HomeTitle" />
+    <meta property="og:description" content="@SiteConfig.HomeDescription" />
+    <meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path ?? SiteConfig.DefaultMetaImage)" />
 </head>
 <body>
-    <div class="page" id="app">
-        @RenderBody()
-    </div>
+<style>
+    div#app:before {
+        background-image: url(@SiteConfig.BackgroundImage);
+        @if (!String.IsNullOrEmpty(SiteConfig.BackgroundBlur))
+        {
+            <text> filter: blur(@SiteConfig.BackgroundBlur);
+                -webkit-filter: blur(@SiteConfig.BackgroundBlur);
+            </text>
+        }
+    }
+    @if(!String.IsNullOrEmpty(SiteConfig.GoogleFontFamily)) {
+        <text>
+            body #app,#app .lb-data {
+                font-family: "@SiteConfig.GoogleFontFamily";
+                font-optical-sizing: auto;
+                font-weight: @SiteConfig.FontWeight;
+                color: @SiteConfig.FontColor;
+                font-size: @SiteConfig.FontSize;
+                font-style: normal;
+            };
+            </text>
+    }
+</style>
+<div class="page @SiteConfig.RootCssClass" id="app">
+    @RenderBody()
+</div>
 
-
-	@await RenderSectionAsync("Scripts", required: false)
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

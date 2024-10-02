@@ -51,6 +51,7 @@
   "dependencies": {
     "@fancyapps/ui": "^5.0.26",
     "browserify": "^17.0.0",
+    "qrcode": "^1.5.4",
     "svelte": "^4.2.19"
   }
 }

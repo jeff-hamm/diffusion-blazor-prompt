@@ -19,16 +19,18 @@ public class ButtsListFileService
     };
     public const int LockTimeout = 60 * 1000;
     private readonly ImagePathService pathService;
+    private readonly SiteConfigOptions _siteConfig;
     public FilePath ButtPath { get; }
     private readonly PhysicalFileProvider watcher;
     private readonly ReaderWriterLock fileLock = new ReaderWriterLock();
     private readonly Dictionary<string, IDisposable> changeRegistrations = new();
     private readonly Matcher matcher;
 
-    public ButtsListFileService(ImagePathService pathService)
+    public ButtsListFileService(ImagePathService pathService, SiteConfigOptions siteConfig)
     {
         this.pathService = pathService;
-        ButtPath = pathService.Directory(ImageType.Infinite).FilePath;
+        _siteConfig = siteConfig;
+        ButtPath = pathService.Directory(siteConfig.DefaultImageType).FilePath;
         ButtPath.EnsureDirectory();
         matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
 
@@ -126,7 +128,7 @@ public class ButtsListFileService
     public IEnumerable<FileInfo> GetResultsInFullPath(DirectoryInfo directoryPath)
     {
         return matcher.Execute(new DirectoryInfoWrapper(directoryPath)).Files
-            .Select(match => new FileInfo(pathService.Image(ImageType.Infinite, match.Path)))
+            .Select(match => new FileInfo(pathService.Image(_siteConfig.DefaultImageType, match.Path)))
             .OrderBy(f => f.CreationTimeUtc)
             .ToArray();
     }

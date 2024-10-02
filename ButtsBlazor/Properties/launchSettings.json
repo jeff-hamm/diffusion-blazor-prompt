@@ -7,7 +7,6 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "https://0.0.0.0:5022;http://0.0.0.0:5023"
-        //"DOTNET_MODIFIABLE_ASSEMBLIES": "Debug"
       },
       "dotnetRunMessages": true,
       "inspectUri": "{wsProtocol}://localhost:5022/_framework/debug/ws-proxy?browser={browserInspectUri}",
@@ -15,14 +14,12 @@
     },
     "wedding": {
       "commandName": "Project",
-      "launchBrowser": true,
-      "launchUrl": "http://127.0.0.1:5023/wedding",
+      "launchBrowser":true,
+      "launchUrl": "http://127.0.0.1:5023",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://0.0.0.0:5023",
         "PromptOptions__GradioUri": "http://127.0.0.1:7860"
-
-        //"DOTNET_MODIFIABLE_ASSEMBLIES": "Debug"
       },
       "dotnetRunMessages": true,
       "inspectUri": "{wsProtocol}://127.0.0.1:5023/_framework/debug/ws-proxy?browser={browserInspectUri}",

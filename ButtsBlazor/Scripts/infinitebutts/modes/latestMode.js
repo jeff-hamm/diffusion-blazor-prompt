@@ -58,7 +58,7 @@ var LatestMode = /** @class */ (function () {
                         return [2 /*return*/, {
                                 data: butt,
                                 pageType: "butt",
-                                title: butt.isLatest ? "Latest Butt! [#".concat(butt.index, "]") : "Random Butt #" + butt.index.toString()
+                                title: butts.pageTitle(butt, this.queue.options)
                             }];
                 }
             });

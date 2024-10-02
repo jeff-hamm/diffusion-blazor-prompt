@@ -2,6 +2,7 @@
 import * as utils from '../utils.js';
 import DefaultMode from './defaultMode.js';
 import ButtQueue from '../buttQueue';
+import { pageTitle } from '../types';
 
 export default class IndexMode extends DefaultMode {
     constructor(queue: ButtQueue) {
@@ -18,7 +19,7 @@ export default class IndexMode extends DefaultMode {
         return {
             data: butt,
             pageType: "butt",
-            title: "Butt #" + butt.index.toString()
+            title: pageTitle(butt, this.queue.options, "") 
         }
     }
 }

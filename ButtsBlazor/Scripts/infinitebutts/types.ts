@@ -1,6 +1,5 @@
 ﻿
 
-
 export type PageState = {
     pageName: string;
     mode: IPageMode;
@@ -34,6 +33,7 @@ export interface IButtsOptions {
     indexRefreshTimer: number;
     preloadCount: number;
     maxNavSpeed: number;
+    imageType?:string;
 
 }
 export interface IButtImage {
@@ -71,4 +71,9 @@ export type ButtPage = {
     page?: string;
     title?: string;
     nextRefresh?: number;
+}
+let defaultImageType = 'defaultImageType' in window ? window.defaultImageType : 'Butt';
+export function pageTitle(butt: IButtImage, options: IButtsOptions, requestMode: String=''):string {
+    var type = options.imageType ?? defaultImageType;
+    return butt.isLatest ? `New ${type}! #${butt.index}` : `${requestMode} ${type} #${butt.index}`
 }

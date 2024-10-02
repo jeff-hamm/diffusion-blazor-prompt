@@ -24,15 +24,18 @@ module.exports = {
         
     },
     devtool: 'source-map',
+    experiments: {
+        outputModule: true
+    },
     output: {
         path: path.resolve(__dirname, "wwwroot"),
         chunkFilename: "js/[name].js?ver=[contenthash]",
         filename: "js/[name].js?ver=[contenthash]",
         publicPath: "/",
-        library: {
-            name: '[name]',
-            type: 'window'
-        }
+        module:true,
+        //globalObject: "this",
+        library: '[name]',
+        libraryTarget: 'window'
 
     },
     watchOptions: {
@@ -66,6 +69,7 @@ module.exports = {
             net: false,
             dns: false,
             tls: false,
+            "os": require.resolve("os-browserify/browser"),
             assert: false,
             // fixes next-i18next dependencies
             path: false,
@@ -80,48 +84,48 @@ module.exports = {
     externals: {
         DotNet: '@microsoft/dotnet-js-interop',
     },
-    optimization: {
-        runtimeChunk: "single",
-        splitChunks: {
-            cacheGroups: {
-                bootstrap: {
-                    test: /[\\/]bootstrap[\\/]/,
-                    name: "bootstrap",
-                    reuseExistingChunk: true,
-                    chunks: "all"
-                },
-                jquery: {
-                    test: /[\\/]node_modules[\\/]jquery/,
-                    name: "jquery",
-                    reuseExistingChunk: true,
-                    chunks: "all"
-                },
-                cropperjs: {
-                    test: /[\\/]node_modules[\\/]cropperjs/,
-                    name: "cropperjs",
-                    reuseExistingChunk: true,
-                    chunks: "all"
-                },
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: "vendors",
-                    reuseExistingChunk: true,
-                    chunks: "initial",
-                    minSize: 0,
-                    priority: -20
-                },
-                default: {
-                    reuseExistingChunk: true,
-                },
-                defaultVendors: false
-            }
-        },
-        minimize: true,
-        minimizer: [
-            new TerserPlugin(),
-            new CssMinimizerPlugin(),
-        ],
-    },
+    //optimization: {
+    //    runtimeChunk: "single",
+    //    splitChunks: {
+    //        cacheGroups: {
+    //            bootstrap: {
+    //                test: /[\\/]bootstrap[\\/]/,
+    //                name: "bootstrap",
+    //                reuseExistingChunk: true,
+    //                chunks: "all"
+    //            },
+    //            jquery: {
+    //                test: /[\\/]node_modules[\\/]jquery/,
+    //                name: "jquery",
+    //                reuseExistingChunk: true,
+    //                chunks: "all"
+    //            },
+    //            cropperjs: {
+    //                test: /[\\/]node_modules[\\/]cropperjs/,
+    //                name: "cropperjs",
+    //                reuseExistingChunk: true,
+    //                chunks: "all"
+    //            },
+    //            vendors: {
+    //                test: /[\\/]node_modules[\\/]/,
+    //                name: "vendors",
+    //                reuseExistingChunk: true,
+    //                chunks: "initial",
+    //                minSize: 0,
+    //                priority: -20
+    //            },
+    //            default: {
+    //                reuseExistingChunk: true,
+    //            },
+    //            defaultVendors: false
+    //        }
+    //    },
+    //    minimize: true,
+    //    minimizer: [
+    //        new TerserPlugin(),
+    //        new CssMinimizerPlugin(),
+    //    ],
+    //},
     module: {
         rules: [
             {
@@ -183,9 +187,9 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin({
             cleanOnceBeforeBuildPatterns: [
-                'css/**',
+                'styles/**',
                 'js/**',
-                'img/**',
+                'img/**'
             ]
         }),
         new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
@@ -196,8 +200,8 @@ module.exports = {
             jQuery: 'jquery',
         }),
         new MiniCssExtractPlugin({
-            filename: "css/[name].css?[contenthash]",
-            chunkFilename: "css/[name].css?[contenthash]",
+            filename: "styles/[name].css?[contenthash]",
+            chunkFilename: "styles/[name].css?[contenthash]",
             ignoreOrder: false
         }),
         new HtmlWebpackPlugin({

@@ -1,1 +1,0 @@
-{"version":3,"file":"css/infiniteButts.css?1fc252ea6cef1c0da67b","mappings":"AAQA,4BACI,sBACJ","sources":["webpack://buttsweb/css/infiniteButts.css%3F1fc252ea6cef1c0da67b"],"sourcesContent":["#SSG_menu {\n    display: none !important;\n}\n\n.title {\n    display: none !important;\n}\n\n.uwCaption {\n    display: none !important;\n}\n"],"names":[],"sourceRoot":""}

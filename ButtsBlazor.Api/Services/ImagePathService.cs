@@ -2,6 +2,7 @@
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Client.Utils;
 using Microsoft.AspNetCore.Hosting;
+using SixLabors.ImageSharp;
 
 namespace ButtsBlazor.Services;
 
@@ -35,7 +36,7 @@ public class ImagePathService : IPathConverter
     {
 
         var filePath = Path.GetRelativePath(config.ImagePathRoot(tenant), path);
-        return WebPath(ImageDirectoryLookup(ImageType.Thumbnail), filePath);
+        return WebPath(ImageDirectoryLookup(ImageType.Thumbnail), filePath,tenant);
     }
 
     private string ImageDirectoryLookup(ImageType type) =>
@@ -48,6 +49,7 @@ public class ImagePathService : IPathConverter
             ImageType.Output => config.OutputPath,
             ImageType.Infinite => config.GeneratedPath,
             ImageType.Thumbnail => config.ThumbnailPath,
+            ImageType.Photo => config.PhotoPath,
             _ => throw new InvalidOperationException($"Unknown image type {type}")
         };
 

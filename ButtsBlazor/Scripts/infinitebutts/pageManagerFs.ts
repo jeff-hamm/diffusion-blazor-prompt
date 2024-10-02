@@ -40,7 +40,11 @@ export default class PageManager {
         this.current = { pageName, mode, page:buttPage }
         const urlPage = utils.getPageFromUrl(window.location.pathname);
         if (pageName !== urlPage) {
-            history.pushState({pageName, page:buttPage}, "", "/" + pageName);
+            var url = "/" + pageName;
+            if (this.owner.options.imageType) {
+                url += "?t=" + this.owner.options.imageType;
+            }
+            history.pushState({pageName, page:buttPage}, "", url);
         }
         return this.current;
     }
@@ -53,7 +57,11 @@ export default class PageManager {
         this.current = { pageName:page, mode }
         const urlPage = utils.getPageFromUrl(window.location.pathname);
         if (addToHistory && page !== urlPage) {
-            history.pushState({ pageName: this.current.pageName },"","/" + page);
+            var url = "/" + page;
+            if (this.owner.options.imageType) {
+                url += "?t=" + this.owner.options.imageType;
+            }
+            history.pushState({ pageName: this.current.pageName },"",url);
         }
         return this.current;
     }

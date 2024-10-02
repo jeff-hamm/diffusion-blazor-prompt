@@ -4,7 +4,33 @@ import PageManager from './pageManagerFs.js';
 import defaultOptions from './options.js'
 import ButtQueue from "./buttQueue.js";
 import Share from './share.js';
+import QRCode from 'qrcode'
 
+export class PhotoSetter {
+    constructor() {
+        this.$photoContainer = $('#photoContainer');
+        this.template = this.$photoContainer.find('img')[0].outerHTML;
+    }
+    title: string;
+    template: string;
+    $photoContainer: JQuery;
+    $photoContainerB: JQuery;
+    fadeTime: number = 1000;
+
+    setPhotoTitle(title: string) {
+        this.title = title;
+    }
+    setPhoto(path:string) {
+        var $photo = $(this.template).attr('src', path).attr('data-title',this.title).data('title', this.title);
+        var $children = this.$photoContainer.children('img')
+        if($children.length > 1)
+            $children.last().remove();
+        this.$photoContainer.removeClass('fading');
+        this.$photoContainer.prepend($photo);
+        this.$photoContainer.addClass('fading');
+
+    }
+}
 
 export default class InfiniteButts {
     $container: JQuery;
@@ -24,7 +50,8 @@ export default class InfiniteButts {
 //    $imageBox: JQuery;
     $metaTag: JQuery;
     $shareLink: JQuery;
-    $photo: JQuery;
+    photoSetter: PhotoSetter;
+    $qrCode: JQuery;
 
 
     constructor($container: JQuery, options: butts.IButtsOptions) {
@@ -38,11 +65,12 @@ export default class InfiniteButts {
             $(document).keydown(e => this._onKeyDown(e))
             this.$loader = $('#spinner');
             this.$shareLink = $('#shareLink');
+            this.$qrCode = $('#qrCode');
             this.$caption = $('#caption');
 //            Share(<HTMLElement>this.$shareLink[0])
             this.$refreshBox =$('#refresh-box').hide();
             this.$timer = $('#timer');
-            this.$photo = $('#photo');
+            this.photoSetter = new PhotoSetter();
             //this.$imageBox = $('#imageBox')
             //if (this.$imageBox.attr('href')) { 
             //    this.$imageBox.trigger('click');
@@ -85,7 +113,8 @@ export default class InfiniteButts {
 
     async setPage(next: butts.ButtPage) {
         clearTimeout(this.timer);
-        let nextRefresh = this.refreshTimer;
+        let nextRefresh = 
+            next.data?.isLatest ? this.options.latestRefreshTimer : this.refreshTimer;
         if (next.page && !this.pageMode.isPageMatch(next.page)) {
             this.loadPage(next.page);
             return;
@@ -139,19 +168,39 @@ export default class InfiniteButts {
         }
     }
 
+    getUrlForPath(butt: butts.IButtImage) : string {
+        if(!butt.isLatest)
+            return document.location.href;
+        return new URL("/" + butt.index, document.location.href).href; 
+        
+    }
 
     async setButt(butt: butts.ButtPage) {
         if (!butt.page)
             butt.page = butt.data.index.toString();
         this.pageModes.setButtPage(butt);
-        this.$photo.attr("data-title", butt.title);
+        this.photoSetter.setPhotoTitle(butt.title);
+        console.log('Generating QR code for ' +this.options.urlBase + butt.data.path);
+
+        const data = await QRCode.toDataURL(
+            this.getUrlForPath(butt.data),
+            {
+                margin: 1,
+                scale: 4,
+                color: {
+                    dark:"#FF00FF",
+                    light:"#D0D0D0"
+                  }
+            });
+        this.$qrCode.attr('src', data);
         this.$caption.text(butt.title);
 //        this.$imageBox.attr("data-title", butt.title);
         if (!this.image || butt.data.path !== this.image.path) {
             this.image = butt.data;
-            this.$photo.attr('src', this.image.path);
+            this.photoSetter.setPhoto(this.image.path);
 //            this.$imageBox.attr('href', this.image.path);
             this.$metaTag.attr('content', this.image.path);
+            $('#content').addClass('loaded');
 //            this.$imageBox.trigger('click');
         }
         return this.image;
@@ -183,7 +232,7 @@ export default class InfiniteButts {
         this.lastClick = new Date();
         if (this.pageModes.current?.mode) {
             const page = await this.pageModes.current.mode.clicked(event);
-            if (page) {
+            if (page) { 
                 await this.setPage(page);
             }
         }

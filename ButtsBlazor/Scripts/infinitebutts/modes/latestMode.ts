@@ -18,7 +18,7 @@ export default class LatestMode implements butts.IPageMode {
         return {
             data: butt,
              pageType: "butt",
-             title: butt.isLatest ? `Latest Butt! [#${butt.index}]` : "Random Butt #" + butt.index.toString()
+            title: butts.pageTitle(butt, this.queue.options)
 
         }
     }

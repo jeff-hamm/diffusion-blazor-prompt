@@ -6,24 +6,21 @@ using ButtsBlazor.Server.Components;
 using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
 using Configuration.EFCore;
+using DotNetEnv;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-//builder.Services.Configure<ButtOptions>(builder.Configuration.GetSection(nameof(ButtOptions)));
-//builder.Services.AddButtPrompts();
-builder.Services.AddButts(builder.Configuration);
+
+//Env.Load("./protobooth.env");
+var config = builder.AddSiteConfig();
+builder.AddButts();
 builder.Services.AddSignalR().AddHubOptions<NotifyHub>(opts =>
 {
     opts.MaximumReceiveMessageSize = Int32.MaxValue;
 });
-builder.Services.AddButtsDb();
-
-builder.Configuration.AddEFCoreConfiguration<ButtsDbContext>(options =>
-{
-    options.UseSqlite(ButtsDbContext.DefaultConnectionString);
-}, reloadOnChange: true, onLoadException: ex => ex.Ignore = true);
+builder.AddButtsDb(config.DbPath);
 builder.Services.AddControllers();
 builder.Services.AddRazorPages()
     .AddRazorRuntimeCompilation()
@@ -63,8 +60,10 @@ else
 //app.UseButtPrompts();
 //app.UseHttpsRedirection();
 app.UseDefaultFiles();
-app.UseStaticFiles(new StaticFileOptions()
+app.UseStaticFiles(
+    new StaticFileOptions()
 {
+    
 	OnPrepareResponse = ctx => {
 		ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
 		ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", 

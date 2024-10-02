@@ -8,5 +8,6 @@ public enum ImageType
     Infinite,
     Camera,
     Temp,
-    Thumbnail
+    Thumbnail,
+    Photo
 }

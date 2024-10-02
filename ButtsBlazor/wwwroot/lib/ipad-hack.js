@@ -1,5 +1,7 @@
 var $ = window.$;
 Cropper = window.Cropper;
+const FORCE_RATIO = true;
+const RATIO = 2.5/3.5;
 function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
@@ -67,7 +69,6 @@ function onFormSubmit(e) {
 let isRotated = false;
 let cropper;
 let options = {
-//    aspectRatio: 2 / 3,
     viewMode: 3,
     crop: function (e) { onCrop(e); },
     dragMode: 'move',
@@ -80,19 +81,25 @@ let options = {
     cropBoxResizable: true,
     toggleDragModeOnDblclick: true,
 };
+if (FORCE_RATIO) {
+    options.aspectRatio = RATIO
+}
 function rotateRatio() {
     if (isRotated) {
         isRotated = false;
-//        options.aspectRatio = 2 / 3;
+        if(FORCE_RATIO)
+            options.aspectRatio = RATIO;
     }
     else {
         isRotated = true;
-//        options.aspectRatio = 3 / 2;
+        if (FORCE_RATIO)
+            options.aspectRatio = 1 / RATIO;
     }
 }
 function onImageSelected(image) {
     const imageEl = image.addClass('cropper-hidden')[0];
-//    options.aspectRatio = 2 / 3;
+    if (FORCE_RATIO)
+        options.aspectRatio = RATIO;
     isRotated = false;
     if (imageEl.naturalWidth < imageEl.naturalHeight) {
         rotateRatio();

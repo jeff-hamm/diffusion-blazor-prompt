@@ -8,13 +8,17 @@ export default class ButtQueue {
     latestButt: butts.IButtImage;
     latestButtShown: boolean = false;
     apiUrl: string;
+    options:butts.IButtsOptions;
     constructor(options:butts.IButtsOptions) {
+        this.options = options;
         this.targetSize = options.preloadCount;
         this.randomButtsQueue = [];
         this.apiUrl = options.urlBase;
-        var t =new URLSearchParams(window.location.search).get("type");
+        var q =new URLSearchParams(window.location.search); 
+        var t = q.get("type") ?? q.get("t");
         if (t) {
             this.apiUrl += "/" + t;
+            options.imageType = t.charAt(0).toUpperCase() + t.slice(1);;
         }
         const url = new URL("worker/loadButtsWorker.js", window.location.origin);
         this.preloadWorker = new Worker(url, { type: "module" });

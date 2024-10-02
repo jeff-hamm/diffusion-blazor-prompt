@@ -52,7 +52,7 @@ public class ButtsDbContext: DbContext
         modelBuilder.Entity<ImageEntity>().HasIndex(e => e.Path).IsUnique();
         base.OnModelCreating(modelBuilder);
     }
-    public const string DefaultDbPath = "db/wedding.db";
+    public const string DefaultDbPath = "db/butts.db";
 
     public static readonly string DefaultConnectionString = $"Data Source={DefaultDbPath}";
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

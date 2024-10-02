@@ -18,6 +18,7 @@ public class PromptOptions
     public string OutputPath { get; set; } = "prompted";
     public string GeneratedPath { get; set; } = "generated";
     public string CameraPath { get; set; } = "camera";
+    public string PhotoPath { get; set; } = "photo";
 
     public GenerationOptions GenerationOptions { get; set; } = new();
     public LogLevel LogLevel { get; set; } = LogLevel.Debug;

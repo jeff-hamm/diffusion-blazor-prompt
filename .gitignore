@@ -7,10 +7,15 @@ Secrets.ps1
 *.userosscache
 *.sln.docstates
 *.jfm
-
+.seed_images/**
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-
+wwwroot/ts/
+ButtsBlazor/wwwroot/css/
+ButtsBlazor/wwwroot/ts/
+ButtsBlazor/wwwroot/photobooth/
+**/*.db
+**/*.db-shm
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

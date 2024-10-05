@@ -23,8 +23,7 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptModuleKind>Node</TypeScriptModuleKind>
   </PropertyGroup>
-
-
+  
   <ItemGroup>
     <Compile Remove="sampleSdXl\**" />
     <Compile Remove="Scripts\prompts\node_modules\**" />
@@ -98,13 +97,6 @@
 
   <ItemGroup>
     <None Remove="protobooth.env" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <Content Include="protobooth.env">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

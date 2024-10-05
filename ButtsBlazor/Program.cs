@@ -1,6 +1,8 @@
+using System.Web;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Services;
 using ButtsBlazor.Client.Pages;
+using ButtsBlazor.Client.Services;
 using ButtsBlazor.Hubs;
 using ButtsBlazor.Server.Components;
 using ButtsBlazor.Server.Services;
@@ -85,4 +87,38 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Input).Assembly);
 await app.Services.MigrateDatabase();
+
+async Task GeneratePrompts(int count)
+{
+    var r = new Random();
+    await using var fw = new StreamWriter("./prompts.txt");
+    foreach (var i in Enumerable.Range(0, 10000))
+    {
+        using var scope = app.Services.CreateScope();
+        var ps = scope.ServiceProvider.GetRequiredService<IPromptGenerationService>();
+
+        var p = ps.GetPromptBuilder().Build();
+        foreach (var c in p)
+        {
+            var f = c.Part switch
+            {
+                PromptPart.Place => "mystical forest",
+                PromptPart.Object => "photo booth",
+                PromptPart.Butts => "people in a mystical forest",
+                _ => ""
+            };
+            if (!String.IsNullOrEmpty(f))
+                c.Choose(f);
+            else
+                c.Choose(c.Choices[r.Next(c.Choices.Length)]);
+        }
+
+        await fw.WriteLineAsync(
+            HttpUtility.HtmlDecode(
+                p.ToPromptString()) + ", sony fe 12-24mm f/2.8 gm,  32k uhd, alluring, perfect skin, seductive, amazing quality, wallpaper, analog film grain");
+    }
+    fw.Flush();
+}
+
+await GeneratePrompts(10000);
 app.Run();

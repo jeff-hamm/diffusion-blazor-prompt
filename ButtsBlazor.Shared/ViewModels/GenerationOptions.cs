@@ -34,5 +34,7 @@ public class GenerationOptions
     public double ImproverChance { get; set; } = 1.0;
     public double ColorChance { get; set; } = .5;
     public double CharacterChance { get; set; } = 1.0;
+    public bool RequireButt { get; set; } = false;
+
     public const string ConfigSection = nameof(GenerationOptions);
 }

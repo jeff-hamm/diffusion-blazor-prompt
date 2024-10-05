@@ -431,9 +431,10 @@ img.photo {
     outline: none;
 }
 
-#photoContainer img:not([src]) {
-    outline: none;
-}
+    #photoContainer img:not([src]) {
+        outline: none;
+        opacity: 0;
+    }
 
 @media (orientation: landscape) {
     #photoContainer .photo {

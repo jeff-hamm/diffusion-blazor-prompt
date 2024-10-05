@@ -15,7 +15,7 @@ services:
     image: sjc.vultrcr.com/infinitebutts/butts-prompts
     container_name: infinite-butts
     build:
-      context: .
+      context: ../ButtsBlazor
       dockerfile: ./ButtsBlazor/Dockerfile
     environment:
       - ASPNETCORE_HTTP_PORTS=8080
@@ -28,7 +28,7 @@ services:
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
     build:
-      context: .
+      context: ../ButtsBlazor
       dockerfile: ./ButtsBlazor/Dockerfile
     ports:
       - "8081"

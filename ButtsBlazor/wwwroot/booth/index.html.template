@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base href="${BASE_URL}" />
+
+    <meta charset="UTF-8" />
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+    <meta name="description" content="${SITE_DESC}">
+
+    <meta property="og:description" content="${SITE_DESC}">
+    <meta property="og:title" content="${SITE_NAME}">
+    <meta property="og:url" content="${SITE_URL}">
+    <meta property="og:image" content="${SITE_IMAGE}">
+
+    <meta name="twitter:text:title" content="${SITE_NAME}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${SITE_NAME}">
+    <meta name="twitter:description" content="${SITE_DESC}">
+    <meta name="twitter:image" content="${SITE_IMAGE}">
+
+    <!-- iOS meta tags & icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="${SITE_NAME}" />
+
+    <link rel="apple-touch-icon" href="icons/Icon-192.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <title>${SITE_NAME}</title>
+
+    <style>body,html{padding:0;margin:0;width:100%;height:100%;background:linear-gradient(#cfcfcf,#fff)}body{display:flex;justify-content:center;align-items:center;}</style>
+    <style>.MuiCircularProgress-root{display:inline-block}.MuiCircularProgress-static{
+      transition:transform .3s cubic-bezier(.4,0,.2,1) 0s}
+      .MuiCircularProgress-indeterminate{
+        animation:MuiCircularProgress-keyframes-circular-rotate 1.4s linear infinite}
+        .MuiCircularProgress-determinate{transition:transform .3s cubic-bezier(.4,0,.2,1) 0s}
+        .MuiCircularProgress-colorPrimary{color:#4CAF50}
+        .MuiCircularProgress-colorSecondary{color:#973503}
+        .MuiCircularProgress-svg{display:block;animation:loading_animation 1.4s infinite}
+        .MuiCircularProgress-circle{stroke:currentColor}
+        .MuiCircularProgress-circleStatic{transition:stroke-dashoffset .3s cubic-bezier(.4,0,.2,1) 0s}
+        .MuiCircularProgress-circleIndeterminate{animation:MuiCircularProgress-keyframes-circular-dash 1.4s ease-in-out infinite;stroke-dasharray:80px,200px;stroke-dashoffset:0}.MuiCircularProgress-circleDeterminate{transition:stroke-dashoffset .3s cubic-bezier(.4,0,.2,1) 0s}@keyframes MuiCircularProgress-keyframes-circular-rotate{0%{transform-origin:50% 50%}100%{transform:rotate(360deg)}}@keyframes MuiCircularProgress-keyframes-circular-dash{0%{stroke-dasharray:1px,200px;stroke-dashoffset:0}50%{stroke-dasharray:100px,200px;stroke-dashoffset:-15px}100%{stroke-dasharray:100px,200px;stroke-dashoffset:-125px}}
+        .MuiCircularProgress-circleDisableShrink{animation:none}@keyframes loading_animation{0%{color:#4CAF50}25%{color:#973503}50%{color:#FFBB00}75%{color:#CFCFCF}}</style>
+  </head>
+  <body >
+  </script>
+    <div id="loading-indicator" style="width: 60px; height: 60px;" role="progressbar" class="MuiCircularProgress-root MuiCircularProgress-colorPrimary MuiCircularProgress-indeterminate"><svg viewBox="22 22 44 44" class="MuiCircularProgress-svg"> <circle cx="44" cy="44" r="20.2" fill="none" stroke-width="3.6" class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate"></circle></svg></div>
+    <script src="main.dart.js"></script>
+  </body>
+</html>

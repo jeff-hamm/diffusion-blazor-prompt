@@ -9,7 +9,7 @@ import { IButtsOptions } from './types.js';
 
 const options = 'clientOptions' in window ? <IButtsOptions>window.clientOptions : defaultOptions;
 const infiniteButts = new InfiniteButts($(''), options);
-
+(<any>window).infiniteButts = infiniteButts;
 lightbox.end = function () {
 
 }

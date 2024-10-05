@@ -7,7 +7,7 @@ ButtsBlazor/Properties/PublishProfiles/*
 ButtsBlazor/wwwroot/css/*
 # ButtsBlazor/wwwroot/*
 !ButtsBlazor/wwwroot/js/**/*
-!ButtsBlazor/wwwroot/photobooth/**/*
+!ButtsBlazor/wwwroot/photo*/**/*
 !ButtsBlazor/wwwroot/worker/**/*
 !ButtsBlazor/wwwroot/styles/**/*
 ButtsBlazor/wwwroot/img/**/*

@@ -36,11 +36,11 @@ public class LegacyPromptGenerationService(Random random, PromptOptions promptOp
 
         var prefix = random.NextChance(options.PrefixChance);
         var character = random.NextChance(options.CharacterChance);
-
+        var b = options.RequireButt;
         if (prefix)
-            yield return prompt.Add(PromptPart.Prefix, suffix: character ? " " : " Butt");
+            yield return prompt.Add(PromptPart.Prefix, suffix: character ? " " : b ? " Butt" : "" );
         if (character)
-            yield return prompt.Add(PromptPart.Character, suffix: "'s butt");
+            yield return prompt.Add(PromptPart.Character, suffix: b ? "'s butt" : "");
         else if (!prefix)
             yield return prompt.Add(PromptPart.Butts);
 

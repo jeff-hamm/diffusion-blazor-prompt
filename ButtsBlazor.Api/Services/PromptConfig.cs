@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Security.Cryptography;
+using System.Web;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Client.Services;
 using ButtsBlazor.Client.Utils;
@@ -64,12 +66,13 @@ public class SiteConfigOptions
 {
     public const string SectionName = "SiteConfig";
     public string RootCssClass { get; set; } = "infinite";
-    public string HomeTitle { get; set; } = "Infinite Butts - AI Butt Generator";
-    public string DecodedHomeTitle => HomeTitle.Replace("*","'");
+    internal string HomeTitle { get; set; } = "Infinite Butts - AI Butt Generator";
+    public string DecodedHomeTitle => HomeTitle.Replace("*", "'");
     public string HomeDescription { get; set; } = "An infinite stream of AI generated butts.";
     public string BackgroundImage { get; set; } = "/bg.png";
     public string LoaderImage { get; set; } = "/infinitypeach.svg";
     public string FavIcon{ get; set; } = "/favicon.png";
+    public string TabletIcon { get; set; } = "/favicon.png";
     public string? BackgroundBlur { get; set; }
     public string FontWeight {get;set;} = "normal";
     public string FontColor {get;set;}  = "white";
@@ -84,6 +87,23 @@ public class SiteConfigOptions
     public string FontSize { get; set; } = "5vh";
     public string? DefaultMetaImage { get; set; }
     public int? IndexRefreshSeconds { get; set; } = 45;
+
+    private static string? _csshash;
+    private string AppStylesheetHash => _csshash ??= CalculateMD5(Path.Combine("wwwroot", AppStylesheet));
+    public string AppStylesheet { get; set; } = "app.css";
+    public string StylsheetHref => $"{AppStylesheet}?v={HttpUtility.UrlEncode(AppStylesheetHash)}";
+
+    static string CalculateMD5(string filename)
+    {
+        using (var md5 = MD5.Create())
+        {
+            using (var stream = File.OpenRead(filename))
+            {
+                var hash = md5.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+        }
+    }
 }
 
 public class FakeButtsApiClient : IButtsApiClient

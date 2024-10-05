@@ -3,7 +3,7 @@
 @using ButtsBlazor.Api.Services
 @{
     Layout = "Shared/_Layout";
-    ViewData["Title"] = siteConfig.HomeTitle;
+    ViewData["Title"] = siteConfig.DecodedHomeTitle;
     ViewData["NoVendorCss"] = true;
 }
 
@@ -59,6 +59,9 @@
     maxNavSpeed: 100,
     };
     window.defaultImageType = '@siteConfig.DefaultImageType.ToString()';
+    if(window.infiniteButts) {
+        window.infiniteButts.option(window.clientOptions);
+    }
  </script>
    
 @section Scripts {

@@ -13,7 +13,7 @@ Secrets.ps1
 wwwroot/ts/
 ButtsBlazor/wwwroot/css/
 ButtsBlazor/wwwroot/ts/
-ButtsBlazor/wwwroot/photobooth/
+ButtsBlazor/wwwroot/photo*/
 **/*.db
 **/*.db-shm
 # Build results

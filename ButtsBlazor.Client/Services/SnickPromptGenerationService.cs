@@ -14,11 +14,12 @@ public class SnickPromptGenerationService(Random random, PromptOptions promptOpt
     public IEnumerable<PromptChoice> Choices(PromptChoiceBuilder prompt)
     {
         var buttType = random.NextRequired(PromptTokens.ForPart(PromptPart.Butts));
+        var b = options.RequireButt;
 
         if (random.NextChance(options.PrefixChance))
-            yield return prompt.Add(PromptPart.Prefix | PromptPart.Character, suffix: $"'s {buttType}");
+            yield return prompt.Add(PromptPart.Prefix | PromptPart.Character, suffix: b ? $"'s {buttType}" : "");
         else
-            yield return prompt.Add(PromptPart.Prefix | PromptPart.Character, suffix: $"'s {buttType}");
+            yield return prompt.Add(PromptPart.Prefix | PromptPart.Character, suffix: b ? $"'s {buttType}" : "");
 
         yield return prompt.Add(PromptPart.Place, prefix: " in ", suffix: ", ");
 

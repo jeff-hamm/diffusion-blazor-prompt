@@ -11,16 +11,18 @@
         <link rel="stylesheet" href="/styles/bootstrap.css?ver=8"></link>
         <link rel="stylesheet" href="/styles/vendors.css?ver=8"></link>
     }
-    <link rel="stylesheet" href="app.css?ver=16" />
+    <link rel="stylesheet" href="@SiteConfig.StylsheetHref" />
     <link rel="icon" type="image/png" href="@SiteConfig.FavIcon">
-
+    <link rel="apple-touch-icon" href="@SiteConfig.TabletIcon">
+    <meta name="apple-mobile-web-app-title" content="Proto-Booth">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
     @if (!String.IsNullOrEmpty(SiteConfig.GoogleFontFamily))
     {
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=@System.Web.HttpUtility.UrlEncode(SiteConfig.GoogleFontFamily):ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     }
-    <meta property="og:title" content="@SiteConfig.HomeTitle" />
+    <meta property="og:title" content="@SiteConfig.DecodedHomeTitle" />
     <meta property="og:description" content="@SiteConfig.HomeDescription" />
     <meta property="og:image" content="@(((ButtImage?)ViewData[nameof(ButtImage)])?.Path ?? SiteConfig.DefaultMetaImage)" />
 </head>

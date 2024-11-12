@@ -1,4 +1,6 @@
-﻿namespace ButtsBlazor.Api.Model;
+﻿using System;
+
+namespace ButtsBlazor.Api.Model;
 
 public interface IPathConverter
 {

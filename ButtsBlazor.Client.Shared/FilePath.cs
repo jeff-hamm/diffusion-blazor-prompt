@@ -1,4 +1,8 @@
-﻿namespace ButtsBlazor.Api.Model;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace ButtsBlazor.Api.Model;
 
 public struct FilePath
 {

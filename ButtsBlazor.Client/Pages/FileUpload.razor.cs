@@ -9,7 +9,7 @@ using static System.Net.WebRequestMethods;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
-
+using ButtsBlazor.Client.Services;
 namespace ButtsBlazor.Client.Pages
 {
     partial class FileUpload : ComponentBase
@@ -51,7 +51,8 @@ namespace ButtsBlazor.Client.Pages
             {
                 isLoading = true;
                 StateHasChanged();
-                uploadResult = await Client.UploadFile(file);
+                using var client = ClientFactory.CreateClient();
+                uploadResult = await Client.UploadFile(file,Options);
                 if (uploadResult?.Uploaded == true && uploadResult.Path != null)
                     imageSources.Add(uploadResult.Path);
 

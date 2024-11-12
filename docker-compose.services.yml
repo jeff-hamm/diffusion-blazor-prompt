@@ -1,0 +1,22 @@
+services:
+  # ffserver:
+  #   container_name: sony_ffserver
+  #   build:
+  #       context: ffserver
+  #       dockerfile: ./Dockerfile
+  #   ports:
+  #   - "8090:8090"
+  #   - "554:554"
+  #   image: sony_ffserver
+  #   extra_hosts:
+  #   - "host.docker.internal:host-gateway"
+  proxy_ffmpeg:
+    container_name: sony_proxy
+    build:
+        context: Paparazzo.js
+        dockerfile: ./Dockerfile
+    ports:
+    - "3000:3000"
+    image: sony_proxy
+    extra_hosts:
+    - "host.docker.internal:host-gateway"

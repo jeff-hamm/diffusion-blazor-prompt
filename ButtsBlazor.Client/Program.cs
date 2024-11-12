@@ -1,5 +1,6 @@
 using ButtsBlazor.Client;
 using ButtsBlazor.Client.Services;
+using ButtsBlazor.Shared.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Polly;
 using Polly.Extensions.Http;
@@ -20,7 +21,7 @@ builder.RootComponents.Add<Routes>("#app");
 builder.Services.AddHttpClient("").ConfigureHttpClient(c =>
 {
     c.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
-}).AddPolicyHandler(GetRetryPolicy());
+}).AddRetryPolicy();
 
 // Add services to the container.
 //builder.Services.AddHttpClient("",
@@ -37,11 +38,3 @@ var app = builder.Build();
 await app.UseButts();
 await app.RunAsync();
 
-static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-{
-
-    return HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-        .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-}

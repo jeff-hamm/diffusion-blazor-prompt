@@ -7,6 +7,7 @@ using ButtsBlazor.Hubs;
 using ButtsBlazor.Server.Components;
 using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
+using ButtsBlazor.Shared.Services;
 using Configuration.EFCore;
 using DotNetEnv;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -15,9 +16,14 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load("./protobooth.env");
+var envFile = System.Environment.GetEnvironmentVariable("DOTENV_PATH") ?? ".env";
+if (File.Exists(envFile))
+{
+    Env.Load(envFile);
+}
 var config = builder.AddSiteConfig();
-builder.AddButts();
+builder.AddMqtt(config.Cluster)
+    .AddButts();
 builder.Services.AddSignalR().AddHubOptions<NotifyHub>(opts =>
 {
     opts.MaximumReceiveMessageSize = Int32.MaxValue;

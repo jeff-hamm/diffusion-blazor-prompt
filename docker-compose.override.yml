@@ -1,15 +1,15 @@
 version: '3.4'
 
 services:
-  ngnix:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - infinite-butts
-      - protobooth
+  # ngnix:
+  #   image: nginx:latest
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #   depends_on:
+  #     - infinite-butts
+  #     - protobooth
   infinite-butts:
     volumes:
       - .\ButtsBlazor\wwwroot\butts_images:/app/wwwroot/butts_images
@@ -20,6 +20,11 @@ services:
       # - ASPNETCORE_HTTPS_PORTS=8081
     ports:
       - "8080:8080"
+  mqtt:
+    volumes:
+    - ${DATA_VOL:-../data}/mqtt/config:/mosquitto/config:rw
+    - ${DATA_VOL:-../data}/mqtt/data:/mosquitto/data:rw
+    - ${DATA_VOL:-../data}/mqtt/log:/mosquitto/log:rw
 
   protobooth:
     volumes:
@@ -31,3 +36,13 @@ services:
       # - ASPNETCORE_HTTPS_PORTS=8081
     ports:
       - "8081:8080"
+  espam:
+    volumes:
+      - ..\espam\images:/app/wwwroot/butts_images
+      - ..\espam\db:/app/db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      # - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "8082:8080"

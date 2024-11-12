@@ -3,15 +3,21 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using ButtsBlazor.Api.Model;
 using ButtsBlazor.Api.Utils;
 using ButtsBlazor.Client.Services;
 using ButtsBlazor.Client.Utils;
+using ButtsBlazor.Client.ViewModels;
 using ButtsBlazor.Server.Services;
 using ButtsBlazor.Services;
+using ButtsBlazor.Shared.Services;
 using ButtsBlazor.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MQTTnet;
+using MQTTnet.Client;
+using MQTTnet.Extensions.ManagedClient;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -20,7 +26,43 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace ButtsBlazor.Api.Services;
 
-public class FileService(ImagePathService pathService, PromptOptions config, SiteConfigOptions siteConfig, IDbContextFactory<ButtsDbContext> dbContextFactory, ILogger<FileService> logger)
+public class NotificationService(
+    SiteConfigOptions siteConfig,
+    MqttManagedConnectedClient clientFactory,
+    ILogger<NotificationService> logger)
+{
+
+    public async Task NotifyListeners(UploadResult<ImageEntity> image)
+    {
+        if (image.Error != null) return;
+        var payload = JsonSerializer.Serialize(image);
+        logger.LogInformation("Publishing {payload} to {topic}", payload, siteConfig.MqttTopic(image.ImageType));
+        var applicationMessage = new MqttApplicationMessageBuilder()
+            .WithTopic(siteConfig.MqttTopic(image.ImageType))
+            .WithRetainFlag()
+//            .WithUserProperty(nameof(UploadResult.ImageType), image.ImageType?.ToString()??"")
+            .WithPayload(payload)
+            .Build();
+        var client = await clientFactory();
+        await client.EnqueueAsync(applicationMessage);
+
+        //logger.LogInformation("Publishing {payload} to {topic}", payload, siteConfig.MqttBaseTopic);
+        //applicationMessage = new MqttApplicationMessageBuilder()
+        //    .WithTopic(siteConfig.MqttBaseTopic)
+        //    .WithPayload(payload)
+        //    .Build();
+//        await client
+//            .PublishAsync(applicationMessage, CancellationToken.None);
+
+    }
+
+}
+public class FileService(ImagePathService pathService, 
+    PromptOptions config, 
+    SiteConfigOptions siteConfig, 
+    NotificationService notificationService,
+    IDbContextFactory<ButtsDbContext> dbContextFactory, 
+    ILogger<FileService> logger)
 {
     private readonly Random random = new Random();
     public async Task FileScan(ImageType? imageType = null)
@@ -51,6 +93,23 @@ public class FileService(ImagePathService pathService, PromptOptions config, Sit
             }
         }
     }
+
+    public async ValueTask<UploadResult<ImageEntity>> SaveUploadedFile(string tenant, string fileName, ImageType? imageType,
+        Func<Stream> readStream)
+    {
+        var saveFileResult = await SaveAndHashUploadedFile(tenant, fileName, 
+            imageType ?? ImageType.Output, readStream);
+        var result = new UploadResult<ImageEntity>(saveFileResult)
+        {
+            ImageType = imageType,
+            Hash = saveFileResult.Base64Hash,
+            Path = saveFileResult.Path,
+            Uploaded = true
+        };
+        await notificationService.NotifyListeners(result);
+        return result;
+    }
+
     public async ValueTask<ImageEntity> SaveAndHashUploadedFile(string tenant, string fileName, ImageType imageType, Func<Stream> readStream)
     {
         if (!pathService.TryGetValidExtension(fileName, out var extension))
@@ -68,12 +127,10 @@ public class FileService(ImagePathService pathService, PromptOptions config, Sit
                 Base64Hash = base64Hash,
                 Type = imageType
             };
-            if (relativePath.FilePath is {Exists:false} outputPath)
-            {
-                outputPath.EnsureDirectory();
-                tempPath.Move(outputPath);
-                await SaveDbImage(image);
-            }
+            if (relativePath.FilePath is not { Exists: false } outputPath) return image;
+            outputPath.EnsureDirectory();
+            tempPath.Move(outputPath);
+            await SaveDbImage(image);
             return image;
         }
         finally
@@ -81,6 +138,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, Sit
             tempPath.Delete();
         }
     }
+
 
     private readonly SemaphoreSlim dbLock = new(1);
     private async Task SaveDbImage(ImageEntity image)
@@ -337,6 +395,7 @@ public class FileService(ImagePathService pathService, PromptOptions config, Sit
         await dbLock.WaitAsync();
         try
         {
+
             hasChanges =  (await dbContext.SaveChangesAsync()) > 0;
         }
         finally

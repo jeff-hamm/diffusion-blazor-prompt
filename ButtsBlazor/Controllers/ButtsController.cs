@@ -30,8 +30,11 @@ namespace ButtsBlazor.Server.Controllers
         public async Task<ButtImage>? Get([FromQuery] DateTime? known, [FromQuery] int? except, [FromQuery]ImageType? type)
         {
             type ??= siteOptions.Value.DefaultImageType;
-            known ??= DateTime.Now;
+            //            known ??= DateTime.Now;
             bool isMostRecent = true;
+
+
+            // TODO: fix it so that we show the recent ones in order 
             await foreach (var path in fileService.GetLatest(2, ImageType.Output))
             {
                 if (isMostRecent)
@@ -84,11 +87,11 @@ namespace ButtsBlazor.Server.Controllers
         [HttpGet("{index:int}")]
         public async Task<ButtImage?> GetIndex(int index) =>
             legacyFileService.Index(index) ?? 
-			ToButt(			
-	           await fileService.Get(index));
+            ((await fileService.Get(index)) is {} r ?
+            ToButt(r) : null);
 
         private ButtImage? ToButt(ImageEntity get) =>
-	        new ButtImage(get.Path, get.CreationDate, get.RowId, null);
+	        new (get.Path, get.CreationDate, get.RowId, null);
 
         [HttpGet("fileScan")]
         public Task FileScan([FromQuery]ImageType? imageType = null) => fileService.FileScan(imageType);
@@ -120,12 +123,13 @@ namespace ButtsBlazor.Server.Controllers
         private static readonly Regex ValidTenant = new(@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled);
         [HttpPost("upload")]
         public async Task<ActionResult<UploadResult>> PostFile([FromForm] IFormFile file,
-            [FromForm] string? prompt, [FromForm] string? code, [FromForm] string? inputImage, [FromForm]ImageType? imageType, string tenant="butts"
+            [FromForm] string? prompt, [FromForm] string? code, [FromForm] string? inputImage, 
+            [FromForm]ImageType? imageType, string tenant="butts"
         )
         {
             if(!ValidTenant.IsMatch(tenant))
 				return BadRequest("Invalid tenant name");
-            var uploadResult = new UploadResult();
+            var uploadResult = new UploadResult<ImageEntity>();
             var untrustedFileName = file.FileName;
             var displayFileName =
                 WebUtility.HtmlEncode(untrustedFileName);
@@ -148,16 +152,13 @@ namespace ButtsBlazor.Server.Controllers
             {
                 try
                 {
-                    var saveFileResult = await fileService.SaveAndHashUploadedFile(tenant, file.FileName, 
+                    uploadResult = await fileService.SaveUploadedFile(tenant, file.FileName, 
                         imageType ?? ImageType.Output, file.OpenReadStream);
-                    if (prompt != null || code != null)
-                        await fileService.AttachImageMetadata(saveFileResult, prompt, code, inputImage);
-                    uploadResult.Hash = saveFileResult.Base64Hash;
-                    uploadResult.Path = saveFileResult.Path;
-                    uploadResult.Uploaded = true;
+                    uploadResult.BaseUrl = new Uri(siteOptions.Value.Cluster.PublicUrl);
                     logger.LogInformation("{FileName} saved at {Path} with {Hash}",
-                        displayFileName, saveFileResult.Path, uploadResult.Hash);
-                    await hub.Clients.NewControlImage(saveFileResult);
+                        displayFileName, uploadResult.Path, uploadResult.Hash);
+                    if(uploadResult.Data != null)
+                        await hub.Clients.NewControlImage(uploadResult.Data);
                 }
                 catch (IOException ex)
                 {

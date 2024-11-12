@@ -20,6 +20,11 @@ public static class PromptGenerationConfig
         @this.AddScoped<Random>();
         @this.AddScoped<IPromptGenerationService,SnickPromptGenerationService>();
         @this.AddSingleton<History>();
+        @this.AddScoped<Func<HttpClient>>(sp =>
+        {
+            var f = sp.GetRequiredService<IHttpClientFactory>();
+                return () => f.CreateClient();
+        });
         @this.AddScoped<IButtsApiClient, ButtsApiClient>();
 
         return @this;

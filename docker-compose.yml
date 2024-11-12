@@ -4,53 +4,50 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - "80"
     depends_on:
       - infinite-butts
       - protobooth
       
   infinite-butts:
-    image: sjc.vultrcr.com/infinitebutts/butts-prompts
+    image: jumpmyman/butts-prompts
     container_name: infinite-butts
     build:
-      context: ../ButtsBlazor
+      context: .
       dockerfile: ./ButtsBlazor/Dockerfile
     environment:
       - ASPNETCORE_HTTP_PORTS=8080
     ports:
       - "8080"
-    restart: unless-stopped
+
   protobooth:
-    image: sjc.vultrcr.com/infinitebutts/butts-prompts
+    image: jumpmyman/butts-prompts
     container_name: protobooth
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
     build:
-      context: ../ButtsBlazor
+      context: .
       dockerfile: ./ButtsBlazor/Dockerfile
     ports:
       - "8081"
     restart: unless-stopped
 
-#   buttsgenerator:
-#     image: sjc.vultrcr.com/infinitebutts/butts-generator
-# #    image: jumpmyman/butts-generator
-#     build:
-#       context: ../ButtsBlazor.Generator
-#       dockerfile: ./Dockerfile
-#     environment:
-#       - DIFFUSERS_VERBOSITY=debug
-#     volumes:
-#       - ~/.cache:/home/user/.cache
-#     ports:
-#       - "7860:7860"
-#     restart: unless-stopped
-#     deploy:
-#       resources:
-#         reservations:
-#           devices:
-#             - driver: nvidia
-#               count: all
-#               capabilities: [gpu]
+  mqtt:
+    image: eclipse-mosquitto
+    ports:
+      - "1883"
+    command: /usr/sbin/mosquitto -v -c /mosquitto/config/mosquitto.conf
+    restart: unless-stopped
+
+  espam:
+    image: butts-prompts
+    container_name: espam.vs
+    env_file: ./espam.env
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+    build:
+      context: ../ButtsBlazor
+      dockerfile: ./ButtsBlazor/Dockerfile
+    ports:
+      - "8080"
+    restart: unless-stopped

@@ -345,7 +345,13 @@ div.fullscreen {
     max-width: 95vw;
     max-height: 80vh;
 }
-
+.loaded .image-controls.top {
+    top: 0;
+    margin-top: 0;
+    opacity: .5;
+    bottom: unset;
+    padding: 0;
+}
 .loaded .image-controls {
     outline: none;
     display: flex;
@@ -363,7 +369,7 @@ div.fullscreen {
     position: absolute;
     bottom: 0;
     margin-bottom: 2vh;
-    left: 4%;
+    /* left: 12%; */
     align-items: center;
 }
 .image-controls .image-control {

@@ -4,6 +4,7 @@ ButtsBlazor/Properties/PublishProfiles/*
 !ButtsBlazor.Api/**/*
 !ButtsBlazor.Client/**/*
 !ButtsBlazor.Shared/**/*
+!ButtsBlazor.Client.Shared/**/*
 ButtsBlazor/wwwroot/css/*
 # ButtsBlazor/wwwroot/*
 !ButtsBlazor/wwwroot/js/**/*
@@ -19,3 +20,6 @@ ButtsBlazor/wwwroot/img/**/*
 **/*.webp
 **/*.db*
 **/node_modules/*
+!**/*.env
+!**/*.env
+!deploy/*.env
